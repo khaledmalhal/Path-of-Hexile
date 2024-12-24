@@ -161,7 +161,7 @@ public class Board extends MouseAdapter {
                 controlPanel.setThinking(false);
 
                 if (status.GetWinner() == null) {
-                     showMessageAndButton("Game is Draw :-| ", "Game is Draw :-|", "Another game?", true);
+                    showMessageAndButton("Game is Draw :-| ", "Game is Draw :-|", "Another game?", true);
                 } else 
                 if (status.GetWinner() == curPlayer) {
                     showMessageAndButton("YOU WIN ! :-D ", "You lose :_(", "Another game?", true);
