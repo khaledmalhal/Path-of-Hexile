@@ -10,8 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * Clase que implementa el algoritmo MinMax con la poda alpha-beta para determinar cual es la mejor 
+ * jugada en un juego de Hex.
  * @author kmalhal
+ * @author jmoreno
  */
 public class PathOfMinMax implements IPlayer, IAuto
 {
@@ -22,15 +24,33 @@ public class PathOfMinMax implements IPlayer, IAuto
     private int boardSize;
     private List<Point> up, down, left, right;
 
+    /**
+     * Constructor de la clase {@link PathOfMinMax}.
+     * @param name El nombre del bot.
+     */
     public PathOfMinMax(String name) {
         this.name = name;
     }
 
+    /**
+     * Retorna el nombre asignado del bot.
+     * @return Nombre del bot.
+     */
     @Override
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Implementación de la jugada que el bot ha de realizar.
+     * <p>
+     * Este método hace una llamada al método {@link minmax} el cual simulará varias jugadas
+     * y determinará cual es el mejor.
+     * @param hgs El objeto de la clase {@link HexGameStatus} que determina el estado del juego.
+     * @return Retorna el mejor movimiento posible a jugar.
+     * @see HexGameStatus
+     * @see PlayerMove
+     */
     @Override
     public PlayerMove move(HexGameStatus hgs) {
         this.myType     = hgs.getCurrentPlayer();
@@ -60,11 +80,23 @@ public class PathOfMinMax implements IPlayer, IAuto
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
+    /**
+     * TODO
+     */
     @Override
     public void timeout() {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
+    /**
+     * Función que simula varias jugadas hasta obtener la mejor.
+     * @param board El objeto de la clase {@link HexGameStatus} que determina el estado del juego.
+     * @param depth La profundidad de la simulación.
+     * @param isMax Indica si es el jugador maximizador.
+     * @param alpha Alpha para la poda.
+     * @param beta Beta para la poda
+     * @return Retorna la mejor jugada para un estado del juego determinado.
+     */
     public int[] minmax(HexGameStatus board, int depth, boolean isMax, int alpha, int beta) {
         if (depth == 5) return new int[]{0};
         ArrayList<Point> availables = getAvailableCells(board);
@@ -75,6 +107,10 @@ public class PathOfMinMax implements IPlayer, IAuto
         return new int[]{0};
     }
 
+    /**
+     * Solo para própositos de debugging: Imprime una lista de puntos.
+     * @param list Una lista de tipo {@link List<Point>}.
+     */
     private void printListPoint(List<Point> list) {
         System.out.println("Debugging only purporses. Printing list:");
         for (Point p: list) {
@@ -85,6 +121,14 @@ public class PathOfMinMax implements IPlayer, IAuto
         System.out.println("");
     }
 
+    /**
+     * Solo para própositos de debugging: Imprime el mapa de coste de un juego.
+     * <p>
+     * En la matriz habrá un valor {@code dist[i][j] = 0} que determina la fuente 
+     * de una instancia de ejecución Dijkstra.
+     * @param dist Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
+     * @see dijkstra
+     */
     private void printDist(int[][] dist) {
         System.out.println("\n############\n  Cost map\n############\n");
         for (int j = 0; j < boardSize; ++j) {
@@ -99,6 +143,10 @@ public class PathOfMinMax implements IPlayer, IAuto
         System.out.println("");
     }
 
+    /**
+     * Solo para própositos de debugging: Imprime una lista de puntos.
+     * @param list Una lista de tipo {@link List<Point>} que contiene un camino a recorrer.
+     */
     private void printPath(List<Point> list) {
         System.out.println("\n########################\n  Best possible path\n########################\n");
         for (int j = 0; j < boardSize; ++j) {
@@ -124,6 +172,15 @@ public class PathOfMinMax implements IPlayer, IAuto
         System.out.println("");
     }
 
+    /**
+     * Determina el punto con menor coste en todo el tablero.
+     * @param board El tablero del juego.
+     * @param enemyColor Color del enemigo.
+     * @param dist Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
+     * @param visited Una matriz que determina si se ha visitado un cierto punto. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
+     * @return Un {@link Point} con el menor coste en todo el tablero.
+     * @see dijkstra
+     */
     private Point minDistancePoint(HexGameStatus board, int enemyColor, int[][] dist, boolean[][] visited) {
         int min = Integer.MAX_VALUE;
         Point minPoint = new Point(0, 0);
@@ -148,6 +205,16 @@ public class PathOfMinMax implements IPlayer, IAuto
         return minPoint;
     }
 
+    /**
+     * Retorna el coste de una lista de {@link Point}.
+     * <p>
+     * Consulta por la matriz cuadrada de distancias el coste y va sumando los 
+     * costes en las posiciones en la lista {@code list}
+     * @param list Una {@link List<Point>} de todos los puntos a consultar.
+     * @param dist Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
+     * @return 
+     * @see dijkstra
+     */
     public int getCostOfPath(List<Point> list, int dist[][]) {
         int ret = 0;
         for (Point p: list) {
@@ -158,6 +225,14 @@ public class PathOfMinMax implements IPlayer, IAuto
         return ret;
     }
 
+    /**
+     * Construye una {@link ArrayList<Point>} con el camino de menor coste en el tablero.
+     * @param board El tablero del juego.
+     * @param dist Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
+     * @param player El juegador que hace la consulta del camino.
+     * @return Una {@link ArrayList<Point>} con el camino con menor coste.
+     * @see dijkstra
+     */
     public ArrayList<Point> makePath(HexGameStatus board, int[][] dist, PlayerType player) {
         ArrayList<Point> prev = new ArrayList<Point>();
 
@@ -220,6 +295,26 @@ public class PathOfMinMax implements IPlayer, IAuto
         return prev;
     }
 
+    /**
+     * El método complementario de {@link heuristic}.
+     * <p>
+     * Es una implementación de Dijkstra que consulta de todos los puntos de la primera 
+     * fila (o la primera columna) como fuentes e introduce la distancia hasta 
+     * todos los puntos del tablero en una matriz cuadrada {@link int[][]} (con 
+     * tamaño igual al del tablero).
+     * <p>
+     * El resultado final es una {@link ArrayList<Point>} con el camino de menor 
+     * coste desde la fuente hasta el final del tablero.
+     * <p>
+     * Puede usar el método {@link getCostOfPath} para obtener el coste de dicho camino.
+     * @param board El tablero del juego.
+     * @param player El juegador que hace la consulta del camino.
+     * @return Una {@link ArrayList<Point>} con el mejor camino posible.
+     * @see makePath
+     * @see getCostOfPath
+     * @see <a href="https://github.com/orellabac/algoritmosS12015/blob/master/greedy/Dijkstra.java">https://github.com/orellabac/algoritmosS12015/blob/master/greedy/Dijkstra.java</a>
+     * @see <a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm#Pseudocode">https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm#Pseudocode</a>
+     */
     public ArrayList<Point> dijkstra(HexGameStatus board, PlayerType player) {
         /* From a point (i, j), check the following points:
          * (i, j-1)  ;           (i+1, j-1)
@@ -318,10 +413,22 @@ public class PathOfMinMax implements IPlayer, IAuto
         // return 0;
     }
     
+    /**
+     * TODO
+     * @param board
+     * @return 
+     */
     public int heuristic(HexGameStatus board) {
         return 0;
     }
-    
+
+    /**
+     * Construye 4 {@link ArrayList<Point>} que determinan las fuentes y los destinos.
+     * <p>
+     * Las listas resultantes son la primera fila, la última fila,
+     * la primera columna y la última columna del tablero.
+     * @param size El tamaño del tablero.
+     */
     public void createGoalArray(int size) {
         if (up instanceof ArrayList<?>)
             return;
@@ -336,7 +443,12 @@ public class PathOfMinMax implements IPlayer, IAuto
             right.add(new Point(size - 1, i));
         }
     }
-    
+
+    /**
+     * Consulta cuales puntos en el tablero están libres para jugar.
+     * @param board El tablero del juego.
+     * @return Retorna una {@link ArrayList<Point>} con todos los puntos posibles a jugar en el tablero.
+     */
     private ArrayList<Point> getAvailableCells(HexGameStatus board) {
         ArrayList<Point> availables = new ArrayList<>();
         int size = board.getSize();
@@ -347,7 +459,24 @@ public class PathOfMinMax implements IPlayer, IAuto
             }
         return availables;
     }
-    
+
+    /**
+     * Consulta si el punto determinado pertenece a la primera fila o columna del tablero.
+     * <p>
+     * Dependiendo del jugador {@code player}, la fuente puede ser la primera fila 
+     * o la primera columna.
+     * <p>
+     * Para un jugador de tipo {@code PlayerType.PLAYER1} los puntos fuente son 
+     * aquellos que se encuentran en la primera columna.
+     * <p>
+     * Para un jugador de tipo {@code PlayerType.PLAYER2} los puntos fuente son 
+     * aquellos que se encuentran en la primera fila.
+     * @param p Punto a consultar.
+     * @param player El jugador que hace la consulta.
+     * @return {@code true} si el punto pertenece a los puntos fuente; {@code false} en caso contrario.
+     * @see isGoalPoint
+     * @see PlayerType
+     */
     public boolean isSourcePoint(Point p, PlayerType player) {
         int x = (int)p.getX();
         int y = (int)p.getY();
@@ -360,7 +489,24 @@ public class PathOfMinMax implements IPlayer, IAuto
         }
         return false;
     }
-    
+
+    /**
+     * Consulta si el punto determinado pertenece a la última fila o columna del tablero.
+     * <p>
+     * Dependiendo del jugador {@code player}, el destino puede ser la última fila 
+     * o la última columna.
+     * <p>
+     * Para un jugador de tipo {@code PlayerType.PLAYER1} los puntos destino son 
+     * aquellos que se encuentran en la última columna.
+     * <p>
+     * Para un jugador de tipo {@code PlayerType.PLAYER2} los puntos destino son 
+     * aquellos que se encuentran en la última fila.
+     * @param p Punto a consultar.
+     * @param player El jugador que hace la consulta.
+     * @return {@code true} si el punto pertenece a los puntos destino; {@code false} en caso contrario.
+     * @see isSourcePoint
+     * @see PlayerType
+     */
     public boolean isGoalPoint(Point p, PlayerType player) {
         int x = (int)p.getX();
         int y = (int)p.getY();
