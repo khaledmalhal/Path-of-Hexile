@@ -37,16 +37,24 @@ public class PathOfMinMax implements IPlayer, IAuto
         this.boardSize  = hgs.getSize();
         System.out.printf("%s is player type %s\n", name, myType == PlayerType.PLAYER1 ? "PLAYER1" : "PLAYER2");
         createGoalArray(this.boardSize);
+        System.out.println("Up list:");
+        printListPoint(this.up);
+        System.out.println("Down list:");
+        printListPoint(this.down);
+        System.out.println("Left list:");
+        printListPoint(this.left);
+        System.out.println("Right list:");
+        printListPoint(this.right);
 
         // Player colors
         this.myColor = PlayerType.getColor(myType);
         this.otherColor = PlayerType.getColor(PlayerType.opposite(myType));
-        
+
         // Testing out locations
         Point p = new Point(10, 10);
         int color = hgs.getPos(p);
         System.out.printf("Color at [%d, %d] = %d\n", (int)p.getX(), (int)p.getY(), color);
-        
+
         dijkstra(hgs, myType);
         minmax(hgs, 0, true, 0, 0);
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
@@ -67,7 +75,18 @@ public class PathOfMinMax implements IPlayer, IAuto
         return new int[]{0};
     }
 
+    private void printListPoint(List<Point> list) {
+        System.out.println("Debugging only purporses. Printing list:");
+        for (Point p: list) {
+            int x = (int)p.getX();
+            int y = (int)p.getY();
+            System.out.printf("[%d, %d]", x, y);
+        }
+        System.out.println("");
+    }
+
     private void printDist(int[][] dist) {
+        System.out.println("\n############\n  Cost map\n############\n");
         for (int j = 0; j < boardSize; ++j) {
             for (int tab = 0; tab < j; ++tab) {
                 System.out.printf(" ");
@@ -81,6 +100,7 @@ public class PathOfMinMax implements IPlayer, IAuto
     }
 
     private void printPath(List<Point> list) {
+        System.out.println("\n########################\n  Best possible path\n########################\n");
         for (int j = 0; j < boardSize; ++j) {
             for (int tab = 0; tab < j; ++tab) {
                 System.out.printf(" ");
@@ -139,18 +159,25 @@ public class PathOfMinMax implements IPlayer, IAuto
     }
 
     public ArrayList<Point> makePath(HexGameStatus board, int[][] dist, PlayerType player) {
-        ArrayList<Point> prev = new ArrayList<>();
+        ArrayList<Point> prev = new ArrayList<Point>();
 
         ArrayList<Point> goal;
         if (player == PlayerType.PLAYER2) {
-            goal = new ArrayList<>(this.down);
+            goal = new ArrayList<>(this.down.size());
+            for (Point p: this.down) {
+                goal.add((Point)p.clone());
+            }
         } else {
-            goal = new ArrayList<>(this.right);
+            goal = new ArrayList<>(this.right.size());
+            for (Point p: this.right) {
+                goal.add((Point)p.clone());
+            }
         }
 
         Point pMin = null;
         int min = Integer.MAX_VALUE;
 
+        // Get the goal point with the lowest cost.
         for (Point p: goal) {
             int x = (int)p.getX();
             int y = (int)p.getY();
@@ -162,37 +189,40 @@ public class PathOfMinMax implements IPlayer, IAuto
         System.out.printf("Lowest goal point: [%d, %d]\n", (int)pMin.getX(), (int)pMin.getY());
         prev.add(new Point(pMin));
 
+        // Make a path until you reach a source point.
         while (!isSourcePoint(pMin, player)) {
             int x = (int)pMin.getX();
             int y = (int)pMin.getY();
-            // System.out.printf("Not source point, looking for more: [%d, %d]\n", x, y);
+            System.out.printf("Not source point, looking for more: [%d, %d]\n", x, y);
             min = dist[x][y];
             List<Point> neighList = board.getNeigh(pMin);
             for (Point neigh: neighList) {
                 int xNeigh = (int)neigh.getX();
                 int yNeigh = (int)neigh.getY();
                 if (dist[xNeigh][yNeigh] < min) {
+                    System.out.printf("Min point is [%d, %d]\n", xNeigh, yNeigh);
                     min = dist[xNeigh][yNeigh];
                     pMin.move(xNeigh, yNeigh);
                 }
             }
-            // System.out.printf("Adding point prev: [%d, %d]\n", (int)pMin.getX(), (int)pMin.getY());
             prev.add(new Point(pMin));
-            // prev.add(new Point(minX, minY));
         }
-        System.out.printf("Goal: ");
+        /* ################
+         *    DEBUGGING
+         * ################ */
+        System.out.printf("Goal:\n");
         for (Point p: goal) {
             int x = (int)p.getX();
             int y = (int)p.getY();
-            System.out.printf("[%d, %d]; ", x, y);
+            System.out.printf("[%d, %d] → \t%d\n", x, y, dist[x][y]);
         }
         System.out.println("");
         return prev;
     }
 
     public ArrayList<Point> dijkstra(HexGameStatus board, PlayerType player) {
-        // From a point (i, j), check the following points:
-        /* (i, j-1)  ;           (i+1, j-1)
+        /* From a point (i, j), check the following points:
+         * (i, j-1)  ;           (i+1, j-1)
          * (i-1, j)  ; ((i, j)); (i+1, j)
          * (i-1, j+1);           (i, j+1)
          */
@@ -205,17 +235,29 @@ public class PathOfMinMax implements IPlayer, IAuto
         ArrayList<Point> prev = null;
         List<Point> source;
         if (player == PlayerType.PLAYER2) {
-            source = this.up;
+            source = new ArrayList<>(this.up.size());
+            for (Point p: this.up) {
+                source.add((Point)p.clone());
+            }
         } else {
-            source = this.left;
+            source = new ArrayList<>(this.left.size());
+            for (Point p: this.left) {
+                source.add((Point)p.clone());
+            }
         }
 
         for (Point p: source) {
+            // Calculate best path for every source point.
+            if (board.getPos(p) == enemyColor)
+                continue;
             ArrayList<Point> temp;
 
             int x = (int)p.getX();
             int y = (int)p.getY();
 
+            System.out.println("\n###############################################");
+            System.out.printf("    Executing Dijkstra with source [%d, %d]", x, y);
+            System.out.println("\n###############################################\n");
             int     [][] dist    = new int[boardSize][boardSize];
             boolean [][] visited = new boolean[boardSize][boardSize];
 
@@ -237,14 +279,12 @@ public class PathOfMinMax implements IPlayer, IAuto
 
                     List<Point> toVisit = new ArrayList<>(board.getNeigh(minPoint));
                     for (Point neigh: toVisit) {
-                        // if (isSourcePoint(neigh, player))
-                        //     continue;
-
                         int xNeigh = (int)neigh.getX();
                         int yNeigh = (int)neigh.getY();
                         int colorNeigh = board.getPos(neigh);
                         int cost = Integer.MAX_VALUE;
 
+                        // Any cost tinkering can be done here.
                         if (colorNeigh == playerColor)
                             cost = 0;
                         else if (colorNeigh != playerColor && colorNeigh != enemyColor)
@@ -264,13 +304,14 @@ public class PathOfMinMax implements IPlayer, IAuto
                 minCost = cost;
                 prev = temp;
             }
+            System.out.printf("Shortest path: ");
             for (Point prevPoint: temp) {
                 int x2 = (int)prevPoint.getX();
                 int y2 = (int)prevPoint.getY();
                 System.out.printf("[%d, %d]; ", x2, y2);
             }
             System.out.println("");
-            printPath(prev);
+            printPath(temp);
             printDist(dist);
         }
         return prev;
@@ -311,10 +352,10 @@ public class PathOfMinMax implements IPlayer, IAuto
         int x = (int)p.getX();
         int y = (int)p.getY();
         if (player == PlayerType.PLAYER2) {
-            if (x == 0)
+            if (y == 0)
                 return true;
         } else {
-            if (y == 0)
+            if (x == 0)
                 return true;
         }
         return false;
@@ -324,10 +365,10 @@ public class PathOfMinMax implements IPlayer, IAuto
         int x = (int)p.getX();
         int y = (int)p.getY();
         if (player == PlayerType.PLAYER2) {
-            if (x == (boardSize - 1))
+            if (y == (boardSize - 1))
                 return true;
         } else {
-            if (y == (boardSize - 1))
+            if (x == (boardSize - 1))
                 return true;
         }
         return false;
