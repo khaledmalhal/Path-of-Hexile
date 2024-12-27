@@ -23,11 +23,15 @@
 hs_err_pid*
 replay_pid*
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 /build/
 /dist/
 
 # Netbeans folder
 /nbproject/
+=======
+lib/
+>>>>>>> Stashed changes
 =======
 lib/
 >>>>>>> Stashed changes
