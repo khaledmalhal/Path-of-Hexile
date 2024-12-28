@@ -23,6 +23,7 @@ public class PathOfMinMax implements IPlayer, IAuto
     private int myColor, otherColor;
     private int boardSize;
     private List<Point> up, down, left, right;
+    int[][] distanceMap;
 
     /**
      * Constructor de la clase {@link PathOfMinMax}.
@@ -212,7 +213,7 @@ public class PathOfMinMax implements IPlayer, IAuto
      * costes en las posiciones en la lista {@code list}
      * @param list Una {@link List<Point>} de todos los puntos a consultar.
      * @param dist Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
-     * @return 
+     * @return Retorna el coste de una lista de {@link Point}.
      * @see dijkstra
      */
     public int getCostOfPath(List<Point> list, int dist[][]) {
@@ -398,6 +399,7 @@ public class PathOfMinMax implements IPlayer, IAuto
             if (cost < minCost) {
                 minCost = cost;
                 prev = temp;
+                this.distanceMap = copy2DArray(dist);
             }
             System.out.printf("Shortest path: ");
             for (Point prevPoint: temp) {
@@ -414,12 +416,28 @@ public class PathOfMinMax implements IPlayer, IAuto
     }
     
     /**
-     * TODO
-     * @param board
-     * @return 
+     * Retorna el coste mínimo de una jugada para un jugador determinado.
+     * <p>
+     * Internamente, hace una llamada al método {@link dijkstra} para obtener el 
+     * camino con menor distancia desde la fuente hasta el destino. Y luego calcula 
+     * el coste a partir del camino encontrado.
+     * <p>
+     * También, se usa de una matriz de tipo {@link int[][]} miembro 
+     * ({@code this.distanceMap}) donde están establecidas las distancias desde 
+     * un punto fuente del tablero hasta todos los demás puntos para el cálculo del 
+     * coste del camino.
+     * <p>
+     * Es importante ejecutar este método solo después de haber simulado una jugada.
+     * @param board El tablero del juego.
+     * @param player El jugador que hace la consulta.
+     * @return El coste de una jugada.
+     * @see dijkstra
+     * @see getCostOfPath
+     * @see makePath
      */
-    public int heuristic(HexGameStatus board) {
-        return 0;
+    public int heuristic(HexGameStatus board, PlayerType player) {
+        List<Point> path = dijkstra(board, player);
+        return getCostOfPath(path, this.distanceMap);
     }
 
     /**
@@ -518,5 +536,21 @@ public class PathOfMinMax implements IPlayer, IAuto
                 return true;
         }
         return false;
+    }
+    
+    /**
+     * Retorna una copia de array.
+     * @param array Array fuente
+     * @return Retorna una copia de array de tipo {@link int[][]}.
+     */
+    public int[][] copy2DArray(int[][] array) {
+        int len = array.length;
+        int[][] ret = new int[len][len];
+        for (int i = 0; i < len; ++i) {
+            for (int j = 0; j < len; ++j) {
+                ret[i][j] = array[i][j];
+            }
+        }
+        return ret;
     }
 }
