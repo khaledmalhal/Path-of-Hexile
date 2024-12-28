@@ -22,15 +22,22 @@ public class PathOfMinMax implements IPlayer, IAuto
     private PlayerType myType;
     private int myColor, otherColor;
     private int boardSize;
+    private int depth;
+
     private List<Point> up, down, left, right;
     int[][] distanceMap;
+     private long numNodes;
 
     /**
      * Constructor de la clase {@link PathOfMinMax}.
      * @param name El nombre del bot.
+     * @param depth La profunditat de cerca.
+
      */
-    public PathOfMinMax(String name) {
+    public PathOfMinMax(String name, int depth) {
         this.name = name;
+        this.depth = depth;
+
     }
 
     /**
@@ -76,8 +83,8 @@ public class PathOfMinMax implements IPlayer, IAuto
         int color = hgs.getPos(p);
         System.out.printf("Color at [%d, %d] = %d\n", (int)p.getX(), (int)p.getY(), color);
 
-        dijkstra(hgs, myType);
-        minmax(hgs, 0, true, 0, 0);
+        //dijkstra(hgs, myType);
+        minimax(hgs, depth );
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
@@ -89,24 +96,171 @@ public class PathOfMinMax implements IPlayer, IAuto
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
-    /**
-     * Función que simula varias jugadas hasta obtener la mejor.
-     * @param board El objeto de la clase {@link HexGameStatus} que determina el estado del juego.
-     * @param depth La profundidad de la simulación.
-     * @param isMax Indica si es el jugador maximizador.
-     * @param alpha Alpha para la poda.
-     * @param beta Beta para la poda
-     * @return Retorna la mejor jugada para un estado del juego determinado.
-     */
-    public int[] minmax(HexGameStatus board, int depth, boolean isMax, int alpha, int beta) {
-        if (depth == 5) return new int[]{0};
-        ArrayList<Point> availables = getAvailableCells(board);
-        board.placeStone(availables.get(0));
-        System.out.printf("Current player is: %s\n", board.getCurrentPlayer() == PlayerType.PLAYER1 ? "PLAYER1" : "PLAYER2");
 
-        minmax(board, depth+1, true, 0, 0);
-        return new int[]{0};
+    //////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////   MINIMAX   /////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Escoge el mejor movimiento donde colocaremos nuestra ficha.  
+     * Primero probamos todos los movimientos desde la perspectiva MAX y 
+     * para cada uno llamamos a MIN en la profundidad siguiente.
+     *
+     * @param t     Tablero actual.
+     * @param depth Profundidad máxima del algoritmo minimax.
+     * @return      Devuelve el movimiento óptimo que realizar según el tablero actual.
+     */
+    public PlayerMove minimax(HexGameStatus t, int depth) {
+        // Si no hay movimientos posibles, no hacemos nada
+        List<MoveNode> moves = t.getMoves();
+        if (moves.isEmpty()) {
+            return new PlayerMove(null, numNodes, depth, SearchType.MINIMAX);
+        }
+
+        int valor = Integer.MIN_VALUE;
+        Point p0 = moves.get(0).getPoint();
+        PlayerMove bestMove = new PlayerMove(p0, 0, 0, SearchType.MINIMAX);
+
+
+        // Recorrer todas las opciones
+        for (MoveNode mn : moves) {
+            Point p = mn.getPoint();
+            HexGameStatus newT = new HexGameStatus(t);
+            newT.placeStone(p);  // Jugamos nuestra ficha BF en p
+
+            int value = MIN(newT, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
+
+            // Escoger el mejor
+            if (value > valor) {
+                valor = value;
+                bestMove = new PlayerMove(p, numNodes, depth, SearchType.MINIMAX);
+            }
+        }
+        return bestMove;
     }
+
+    /**
+     * Nodo MAX del algoritmo Minimax con poda alpha-beta que devuelve el máximo valor heurístico.
+     *
+     * @param t     Tablero tras el movimiento anterior.
+     * @param depth Profundidad restante.
+     * @param alpha Valor de α (mejor opción de MAX hasta el momento).
+     * @param beta  Valor de β (mejor opción de MIN hasta el momento).
+     * @return      Devuelve el valor heurístico máximo de todos los movimientos posibles.
+     */
+    private int MAX(HexGameStatus t, int depth, int alpha, int beta) {
+        // Si se acabó la partida, evaluamos
+        if (t.isGameOver()) {
+            PlayerType win = t.GetWinner();
+            if (win == myType) {
+                return 1000;
+            } else {
+                return -1000;
+            }
+        }
+
+        // Caso base: profundidad 0 o no hay más movimientos
+        if (depth == 0 || countEmptyCells(t) == 0) {
+            numNodes++;
+            return heuristic(t, myType);
+        }
+
+        // Generamos todos los movimientos posibles
+        List<MoveNode> moves = t.getMoves();
+        // Si no hay movimientos, devolvemos la heurística
+        if (moves.isEmpty()) {
+            return heuristic(t, myType);
+        }
+
+        // Recorremos cada movimiento y llamamos a MIN
+        for (MoveNode mn : moves) {
+            Point p = mn.getPoint();
+            HexGameStatus newT = new HexGameStatus(t);
+            newT.placeStone(p);
+
+            int val = MIN(newT, depth - 1, alpha, beta);
+
+            alpha = Math.max(alpha, val);
+            // Poda
+            if (alpha >= beta) {
+                break;
+            }
+        }
+        return alpha;
+    }
+
+    /**
+     * Nodo MIN del algoritmo Minimax con poda alpha-beta que devuelve el mínimo valor heurístico.
+     *
+     * @param t     Tablero tras el movimiento anterior.
+     * @param depth Profundidad restante.
+     * @param alpha Valor de α (mejor opción de MAX hasta el momento).
+     * @param beta  Valor de β (mejor opción de MIN hasta el momento).
+     * @return      Devuelve el valor heurístico mínimo de todos los movimientos posibles.
+     */
+    private int MIN(HexGameStatus t, int depth, int alpha, int beta) {
+        // Si se acabó la partida, evaluamos
+        if (t.isGameOver()) {
+            PlayerType win = t.GetWinner();
+            if (win == myType) {
+                return 1000;
+            } else {
+                return -1000;
+            } 
+        }
+
+        // Caso base: profundidad 0 o no hay más movimientos
+        if (depth == 0 || countEmptyCells(t) == 0) {
+            numNodes++;
+            return heuristic(t, myType);
+        }
+
+        // Generamos todos los movimientos posibles
+        List<MoveNode> moves = t.getMoves();
+        // Si no hay movimientos, devolvemos la heurística
+        if (moves.isEmpty()) {
+            return heuristic(t, myType);
+        }
+
+        // Recorremos cada movimiento y llamamos a MIN
+        for (MoveNode mn : moves) {
+            Point p = mn.getPoint();
+            HexGameStatus newT = new HexGameStatus(t);
+            newT.placeStone(p);
+
+            int val = MAX(newT, depth - 1, alpha, beta);
+
+            beta = Math.min(beta, val);
+            // Poda
+            if (alpha >= beta) {
+                break;
+            }
+        }
+        return beta;
+    }
+    
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////  MÉTODOS AUXILIARES  ///////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    /**
+     * Función para calcular el número de casillas vacías en el tablero actual.
+     *
+     * @param t     Tablero actual.
+     * @return      Devuelve el número de casillas vacías del tablero.
+     */
+    private int countEmptyCells(HexGameStatus t) {
+        int count = 0;
+        int size = t.getSize();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (t.getPos(i, j) == 0) { 
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
 
     /**
      * Solo para própositos de debugging: Imprime una lista de puntos.

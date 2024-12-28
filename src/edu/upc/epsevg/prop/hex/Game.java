@@ -2,7 +2,7 @@ package edu.upc.epsevg.prop.hex;
 
 import edu.upc.epsevg.prop.hex.IPlayer;
 import edu.upc.epsevg.prop.hex.players.HumanPlayer;
-import edu.upc.epsevg.prop.hex.players.PlayerID;
+//import edu.upc.epsevg.prop.hex.players.PlayerID;
 import edu.upc.epsevg.prop.hex.players.H_E_X_Player;
 import edu.upc.epsevg.prop.hex.players.PathOfMinMax;
 
@@ -25,7 +25,7 @@ public class Game {
             public void run() {
                 
                 // IPlayer player2 = new H_E_X_Player(2/*GB*/);
-                IPlayer player2 = new PathOfMinMax("PathOfMinMax");
+                IPlayer player2 = new PathOfMinMax("PathOfMinMax", 6);
                 
                 IPlayer player1 = new HumanPlayer("Human");
                                 
