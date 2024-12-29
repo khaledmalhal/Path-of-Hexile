@@ -18,15 +18,13 @@ import java.util.List;
 public class PathOfMinMax implements IPlayer, IAuto
 {
     private String name = "PathOfMinMax";
-    private SearchType search = SearchType.MINIMAX;
-    private PlayerType myType;
-    private int myColor, otherColor;
+    private PlayerType myType, enemyType;
     private int boardSize;
     private int depth;
 
     private List<Point> up, down, left, right;
     int[][] distanceMap;
-     private long numNodes;
+    private long numNodes;
 
     /**
      * Constructor de la clase {@link PathOfMinMax}.
@@ -37,7 +35,6 @@ public class PathOfMinMax implements IPlayer, IAuto
     public PathOfMinMax(String name, int depth) {
         this.name = name;
         this.depth = depth;
-
     }
 
     /**
@@ -63,6 +60,7 @@ public class PathOfMinMax implements IPlayer, IAuto
     public PlayerMove move(HexGameStatus hgs) {
         this.myType     = hgs.getCurrentPlayer();
         this.boardSize  = hgs.getSize();
+        this.enemyType  = PlayerType.opposite(myType);
         System.out.printf("%s is player type %s\n", name, myType == PlayerType.PLAYER1 ? "PLAYER1" : "PLAYER2");
         createGoalArray(this.boardSize);
         System.out.println("Up list:");
@@ -74,18 +72,13 @@ public class PathOfMinMax implements IPlayer, IAuto
         System.out.println("Right list:");
         printListPoint(this.right);
 
-        // Player colors
-        this.myColor = PlayerType.getColor(myType);
-        this.otherColor = PlayerType.getColor(PlayerType.opposite(myType));
-
         // Testing out locations
         Point p = new Point(10, 10);
         int color = hgs.getPos(p);
         System.out.printf("Color at [%d, %d] = %d\n", (int)p.getX(), (int)p.getY(), color);
 
-        //dijkstra(hgs, myType);
-        minimax(hgs, depth );
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        // dijkstra(hgs, myType);
+        return minimax(hgs, depth);
     }
 
     /**
@@ -153,9 +146,9 @@ public class PathOfMinMax implements IPlayer, IAuto
         if (t.isGameOver()) {
             PlayerType win = t.GetWinner();
             if (win == myType) {
-                return 1000;
+                return Integer.MAX_VALUE;
             } else {
-                return -1000;
+                return Integer.MIN_VALUE;
             }
         }
 
@@ -203,23 +196,23 @@ public class PathOfMinMax implements IPlayer, IAuto
         if (t.isGameOver()) {
             PlayerType win = t.GetWinner();
             if (win == myType) {
-                return 1000;
+                return Integer.MAX_VALUE;
             } else {
-                return -1000;
+                return Integer.MIN_VALUE;
             } 
         }
 
         // Caso base: profundidad 0 o no hay más movimientos
         if (depth == 0 || countEmptyCells(t) == 0) {
             numNodes++;
-            return heuristic(t, myType);
+            return heuristic(t, enemyType);
         }
 
         // Generamos todos los movimientos posibles
         List<MoveNode> moves = t.getMoves();
         // Si no hay movimientos, devolvemos la heurística
         if (moves.isEmpty()) {
-            return heuristic(t, myType);
+            return heuristic(t, enemyType);
         }
 
         // Recorremos cada movimiento y llamamos a MIN
@@ -291,7 +284,10 @@ public class PathOfMinMax implements IPlayer, IAuto
                 System.out.printf(" ");
             }
             for (int i = 0; i < boardSize; ++i) {
-                System.out.printf("%d, ", dist[i][j]);
+                if (dist[i][j] == Integer.MAX_VALUE)
+                    System.out.printf("\033[0;31m##\033[0m, ");
+                else
+                    System.out.printf("\033[0m%d, ", dist[i][j]);
             }
             System.out.printf("\n");
         }
@@ -381,17 +377,15 @@ public class PathOfMinMax implements IPlayer, IAuto
     }
 
     /**
-     * Construye una {@link ArrayList<Point>} con el camino de menor coste en el tablero.
-     * @param board El tablero del juego.
-     * @param dist Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
-     * @param player El juegador que hace la consulta del camino.
-     * @return Una {@link ArrayList<Point>} con el camino con menor coste.
-     * @see dijkstra
+     * 
+     * @param dist
+     * @param player
+     * @return
      */
-    public ArrayList<Point> makePath(HexGameStatus board, int[][] dist, PlayerType player) {
-        ArrayList<Point> prev = new ArrayList<Point>();
-
+    public Point getLowestGoal(int[][] dist, PlayerType player) {
         ArrayList<Point> goal;
+        int min = Integer.MAX_VALUE;
+        Point pMin = null;
         if (player == PlayerType.PLAYER2) {
             goal = new ArrayList<>(this.down.size());
             for (Point p: this.down) {
@@ -404,50 +398,75 @@ public class PathOfMinMax implements IPlayer, IAuto
             }
         }
 
-        Point pMin = null;
-        int min = Integer.MAX_VALUE;
-
         // Get the goal point with the lowest cost.
         for (Point p: goal) {
             int x = (int)p.getX();
             int y = (int)p.getY();
             if (dist[x][y] < min) {
                 min  = dist[x][y];
-                pMin = p;
+                pMin = (Point)p.clone();
             }
         }
-        System.out.printf("Lowest goal point: [%d, %d]\n", (int)pMin.getX(), (int)pMin.getY());
-        prev.add(new Point(pMin));
+        // System.out.printf("Lowest goal point: [%d, %d]\n", (int)pMin.getX(), (int)pMin.getY());
+        return (Point)pMin.clone();
+    }
 
-        // Make a path until you reach a source point.
-        while (!isSourcePoint(pMin, player)) {
-            int x = (int)pMin.getX();
-            int y = (int)pMin.getY();
-            System.out.printf("Not source point, looking for more: [%d, %d]\n", x, y);
-            min = dist[x][y];
-            List<Point> neighList = board.getNeigh(pMin);
-            for (Point neigh: neighList) {
-                int xNeigh = (int)neigh.getX();
-                int yNeigh = (int)neigh.getY();
-                if (dist[xNeigh][yNeigh] < min) {
-                    System.out.printf("Min point is [%d, %d]\n", xNeigh, yNeigh);
+    /**
+     * 
+     * @param board
+     * @param prev
+     * @param dist
+     * @param player
+     * @param pMin
+     * @return
+     */
+    private boolean makePath2(HexGameStatus board, ArrayList<Point> prev, int[][] dist, PlayerType player, Point pMin) {
+        if (pMin == null) {
+            pMin = getLowestGoal(dist, player);
+            prev.add((Point)pMin.clone());
+        }
+
+        if (isSourcePoint(pMin, player)) {
+            prev.add((Point)pMin.clone());
+            return true;
+        }
+        int min = Integer.MAX_VALUE;
+        int x = (int)pMin.getX();
+        int y = (int)pMin.getY();
+        min = dist[x][y];
+
+        List<Point> neighList = board.getNeigh(pMin);
+        boolean found = false;
+        for (Point neigh: neighList) {
+            int xNeigh = (int)neigh.getX();
+            int yNeigh = (int)neigh.getY();
+            if (dist[xNeigh][yNeigh] < min) {
+                found = true;
+                // System.out.printf("Min point is [%d, %d]\n", xNeigh, yNeigh);
+                if (makePath2(board, prev, dist, player, neigh) == true) {
+                    if (!isSourcePoint(neigh, player))
+                        prev.add((Point)neigh.clone());
                     min = dist[xNeigh][yNeigh];
-                    pMin.move(xNeigh, yNeigh);
+                    // pMin.move(xNeigh, yNeigh);
                 }
             }
-            prev.add(new Point(pMin));
         }
-        /* ################
-         *    DEBUGGING
-         * ################ */
-        System.out.printf("Goal:\n");
-        for (Point p: goal) {
-            int x = (int)p.getX();
-            int y = (int)p.getY();
-            System.out.printf("[%d, %d] → \t%d\n", x, y, dist[x][y]);
-        }
-        System.out.println("");
-        return prev;
+        return found;
+    }
+
+    /**
+     * Construye una {@link ArrayList<Point>} con el camino de menor coste en el tablero.
+     * @param board El tablero del juego.
+     * @param dist Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
+     * @param player El juegador que hace la consulta del camino.
+     * @return Una {@link ArrayList<Point>} con el camino con menor coste.
+     * @see dijkstra
+     */
+    public ArrayList<Point> makePath(HexGameStatus board, int[][] dist, PlayerType player) {
+        ArrayList<Point> prev = new ArrayList<Point>();
+        if (makePath2(board, prev, dist, player, null) == true)
+            return prev;
+        return null;
     }
 
     /**
@@ -505,9 +524,9 @@ public class PathOfMinMax implements IPlayer, IAuto
             int x = (int)p.getX();
             int y = (int)p.getY();
 
-            System.out.println("\n###############################################");
-            System.out.printf("    Executing Dijkstra with source [%d, %d]", x, y);
-            System.out.println("\n###############################################\n");
+            // System.out.println("\n###############################################");
+            // System.out.printf("    Executing Dijkstra with source [%d, %d]", x, y);
+            // System.out.println("\n###############################################\n");
             int     [][] dist    = new int[boardSize][boardSize];
             boolean [][] visited = new boolean[boardSize][boardSize];
 
@@ -536,7 +555,7 @@ public class PathOfMinMax implements IPlayer, IAuto
 
                         // Any cost tinkering can be done here.
                         if (colorNeigh == playerColor)
-                            cost = 0;
+                            cost = -5;
                         else if (colorNeigh != playerColor && colorNeigh != enemyColor)
                             cost = 5;
 
@@ -549,21 +568,26 @@ public class PathOfMinMax implements IPlayer, IAuto
                 }
             }
             temp = makePath(board, dist, player);
+            if (temp == null)
+                continue;
             int cost = getCostOfPath(temp, dist);
             if (cost < minCost) {
                 minCost = cost;
                 prev = temp;
                 this.distanceMap = copy2DArray(dist);
             }
-            System.out.printf("Shortest path: ");
-            for (Point prevPoint: temp) {
-                int x2 = (int)prevPoint.getX();
-                int y2 = (int)prevPoint.getY();
-                System.out.printf("[%d, %d]; ", x2, y2);
-            }
-            System.out.println("");
-            printPath(temp);
-            printDist(dist);
+            /*************
+             * DEBUGGING *
+             *************/
+            // System.out.printf("Shortest path: ");
+            // for (Point prevPoint: temp) {
+            //     int x2 = (int)prevPoint.getX();
+            //     int y2 = (int)prevPoint.getY();
+            //     System.out.printf("[%d, %d]; ", x2, y2);
+            // }
+            // System.out.println("");
+            // printPath(temp);
+            // printDist(dist);
         }
         return prev;
         // return 0;
@@ -591,6 +615,8 @@ public class PathOfMinMax implements IPlayer, IAuto
      */
     public int heuristic(HexGameStatus board, PlayerType player) {
         List<Point> path = dijkstra(board, player);
+        if (path == null)
+            return (player == myType ? Integer.MIN_VALUE : Integer.MAX_VALUE);
         return getCostOfPath(path, this.distanceMap);
     }
 
@@ -630,6 +656,24 @@ public class PathOfMinMax implements IPlayer, IAuto
                     availables.add(new Point(i, j));
             }
         return availables;
+    }
+
+    /**
+     * Obtiene la menor distancia de todos los vecinos de un punto.
+     * @param board El tablero del juego.
+     * @param point El punto a consulta.
+     * @param dist La matriz de distancias.
+     * @return La menor distancia de un punto a sus vecinos.
+     */
+    private int getLowestCostFromNeighbors(HexGameStatus board, Point point, int[][] dist) {
+        int ret = Integer.MAX_VALUE;
+        for (Point neigh: board.getNeigh(point)) {
+            int x = (int)neigh.getX();
+            int y = (int)neigh.getY();
+            if (dist[x][y] < ret)
+                ret = dist[x][y];
+        }
+        return ret;
     }
 
     /**

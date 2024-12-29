@@ -25,7 +25,7 @@ public class Game {
             public void run() {
                 
                 // IPlayer player2 = new H_E_X_Player(2/*GB*/);
-                IPlayer player2 = new PathOfMinMax("PathOfMinMax", 6);
+                IPlayer player2 = new PathOfMinMax("PathOfMinMax", 4);
                 
                 IPlayer player1 = new HumanPlayer("Human");
                                 
