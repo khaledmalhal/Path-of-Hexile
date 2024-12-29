@@ -259,8 +259,10 @@ public class PathOfMinMax implements IPlayer, IAuto
      */
     public int heuristic(HexGameStatus board, PlayerType player) {
         List<Point> path = this.dijkstra.dijkstra(board, player, lastPlayed);
-        if (path == null)
+        if (path == null) {
+            // System.out.println("Path is null!");
             return (player == myType ? Integer.MIN_VALUE : Integer.MAX_VALUE);
+        }
         return this.dijkstra.getCostOfPath(path);
     }
 }

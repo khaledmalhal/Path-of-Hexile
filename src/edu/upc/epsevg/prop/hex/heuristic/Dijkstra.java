@@ -36,14 +36,14 @@ public class Dijkstra {
         this.boardSize = boardSize;
         createGoalArray(this.boardSize);
 
-        System.out.println("Up list:");
-        Utils.printListPoint(this.up);
-        System.out.println("Down list:");
-        Utils.printListPoint(this.down);
-        System.out.println("Left list:");
-        Utils.printListPoint(this.left);
-        System.out.println("Right list:");
-        Utils.printListPoint(this.right);
+        // System.out.println("Up list:");
+        // Utils.printListPoint(this.up);
+        // System.out.println("Down list:");
+        // Utils.printListPoint(this.down);
+        // System.out.println("Left list:");
+        // Utils.printListPoint(this.left);
+        // System.out.println("Right list:");
+        // Utils.printListPoint(this.right);
     }
 
     /**
@@ -51,6 +51,8 @@ public class Dijkstra {
      * <p>
      * Las listas resultantes son la primera fila, la última fila,
      * la primera columna y la última columna del tablero.
+     * <p>
+     * Estas listas serán guardados en {@link up}, {@link down}, {@link left}, {@link right}.
      * @param size El tamaño del tablero.
      */
     private void createGoalArray(int size) {
@@ -73,13 +75,24 @@ public class Dijkstra {
      * <p>
      * Consulta por la matriz cuadrada de distancias el coste y va sumando los 
      * costes en las posiciones en la lista {@code list}
+     * <p>
+     * Se aconseja utilizar este método después de ejecutar {@link dijkstra} para 
+     * saber su coste.
      * @param list Una {@link List<Point>} de todos los puntos a consultar.
      * @return     Retorna el coste de una lista de {@link Point}.
      * 
      * @see Utils#getCostOfPath(List<Point>, int[][])
+     * @see dijkstra
      */
     public int getCostOfPath(List<Point> list) {
-        return Utils.getCostOfPath(list, this.distanceMap);
+        int ret = 0;
+        for (Point p: list) {
+            int x = (int)p.getX();
+            int y = (int)p.getY();
+            ret += this.distanceMap[x][y];
+        }
+        // System.out.printf("Cost: %d\n", ret);
+        return ret;
     }
 
     /**
@@ -117,7 +130,7 @@ public class Dijkstra {
     }
 
     /**
-     * Obtiene un {@link Point} con la distancia más corta de llegada.
+     * Obtiene un {@link Point} con la distancia más corta de todas fuentes (primera fila o columna).
      * @param dist   Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
      * @param player El jugador que hace la consulta.
      * @return       {@link Point} de menor distancia.
@@ -155,7 +168,7 @@ public class Dijkstra {
     }
 
     /**
-     * Obtiene un {@link Point} con la distancia más corta de llegada.
+     * Obtiene un {@link Point} con la distancia más corta de todas las llegadas (última fila o columna).
      * @param dist   Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
      * @param player El jugador que hace la consulta.
      * @return       {@link Point} de menor distancia.
@@ -205,13 +218,20 @@ public class Dijkstra {
      * <p>
      * Para evitar esto, cuando se consulte los vecinos de un punto sin salida y no haya un vecino 
      * con menor distancia, el método retornará falso. En caso contrario, retornará true.
+     * <p>
+     * Este método se ha de llamar dos veces, creando un camino desde la primera fila o columna hasta
+     * el punto con distancia cero.
      *
      * @param board  El tablero del juego.
      * @param prev   Una {@link ArrayList<Point>} con el camino de menor distancia.
      * @param dist   Una matriz con las distancias desde la fuente.
-     * @param player El jugador actual.
-     * @param pMin   Punto mínimo. Si se va a llamar a este método, use {@code null} como valor en el argumento.
+     * @param pMin   Punto mínimo. Si se va a llamar a este método, use {@link getLowestSource}
+     *               y {@link getLowestGoal} como valor del argumento.
      * @return       True si un punto es válido para el camino. False en caso contrario.
+     * 
+     * @see makePath
+     * @see getLowestSource
+     * @see getLowestGoal
      */
     private boolean makePath2(HexGameStatus board, ArrayList<Point> prev, int[][] dist, Point pMin) {
         int x = (int)pMin.getX();
@@ -241,9 +261,14 @@ public class Dijkstra {
 
     /**
      * Construye una {@link ArrayList<Point>} con el camino de menor coste en el tablero.
+     * 
+     * <p>
+     * Se recomienda usar este método en vez de {@link makePath2}.
+     * 
      * @param board  El tablero del juego.
      * @param dist   Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
      * @param player El juegador que hace la consulta del camino.
+     * @param source El punto fuente de la útlima jugada.
      * @return       Una {@link ArrayList<Point>} con el camino con menor coste.
      * 
      * @see dijkstra
@@ -268,18 +293,18 @@ public class Dijkstra {
     /**
      * Realiza una ejecución del algoritmo Dijkstra y devuelve el mejor camino.
      * <p>
-     * Es una implementación de Dijkstra que consulta de todos los puntos de la primera 
-     * fila (o la primera columna) como fuentes e introduce la distancia hasta 
-     * todos los puntos del tablero en una matriz cuadrada {@link int[][]} (con 
-     * tamaño igual al del tablero).
+     * Es una implementación de Dijkstra que consulta la distancia desde la fuente 
+     * ({@code sourcePoint}) hasta todos los demás puntos del tablero e introduce 
+     * las distancias en una matriz cuadrada {@link int[][]} (con tamaño igual al del tablero).
      * <p>
      * El resultado final es una {@link ArrayList<Point>} con el camino de menor 
      * coste desde la fuente hasta el final del tablero.
      * <p>
      * Puede usar el método {@link getCostOfPath} para obtener el coste de dicho camino.
-     * @param board  El tablero del juego.
-     * @param player El juegador que hace la consulta del camino.
-     * @return       Una {@link ArrayList<Point>} con el mejor camino posible.
+     * @param board       El tablero del juego.
+     * @param player      El juegador que hace la consulta del camino.
+     * @param sourcePoint Es el punto fuente. Tentativamente, es la última jugada.
+     * @return            Una {@link ArrayList<Point>} con el mejor camino posible.
      * 
      * @see makePath
      * @see getCostOfPath
@@ -358,6 +383,7 @@ public class Dijkstra {
             }
         }
         // Utils.printDist(dist, boardSize);
+        this.distanceMap = Utils.copy2DArray(dist);
         ArrayList<Point> prev = makePath(board, dist, player, sourcePoint);
         // Utils.printPath(prev, boardSize);
         return prev;
