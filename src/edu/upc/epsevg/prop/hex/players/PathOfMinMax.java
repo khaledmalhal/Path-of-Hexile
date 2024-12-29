@@ -23,6 +23,7 @@ public class PathOfMinMax implements IPlayer, IAuto
     private int boardSize;
     private int depth;
     private Dijkstra dijkstra;
+    private Point lastPlayed;
 
     private long numNodes;
 
@@ -63,11 +64,20 @@ public class PathOfMinMax implements IPlayer, IAuto
         this.boardSize  = hgs.getSize();
         this.enemyType  = PlayerType.opposite(myType);
 
-        dijkstra = new Dijkstra(this.boardSize);
+        this.dijkstra = new Dijkstra(this.boardSize);
 
-        System.out.printf("%s is player type %s\n", name, myType == PlayerType.PLAYER1 ? "PLAYER1" : "PLAYER2");
+        System.out.printf("%s is player type %s\n", name, myType == PlayerType.PLAYER2 ? "PLAYER2" : "PLAYER1");
 
-        return minmax(hgs, depth);
+        Point p = new Point(2,3);
+        int x = (int)p.getX();
+        int y = (int)p.getY();
+        int color = hgs.getPos(p);
+        System.out.printf("Color at [%d, %d]: %s\n", x, y, 
+                                  color == PlayerType.getColor(PlayerType.PLAYER1) ? "PLAYER1" : 
+                                  color == PlayerType.getColor(PlayerType.PLAYER2) ? "PLAYER2" : "EMPTY");
+        this.dijkstra.dijkstra(hgs, myType, p);
+        throw new UnsupportedOperationException("Not supported yet.");
+        // return minmax(hgs, depth);
     }
 
     /**
@@ -159,6 +169,7 @@ public class PathOfMinMax implements IPlayer, IAuto
             Point p = mn.getPoint();
             HexGameStatus newT = new HexGameStatus(t);
             newT.placeStone(p);
+            lastPlayed = p;
 
             int val = MIN(newT, depth - 1, alpha, beta);
 
@@ -209,6 +220,7 @@ public class PathOfMinMax implements IPlayer, IAuto
             Point p = mn.getPoint();
             HexGameStatus newT = new HexGameStatus(t);
             newT.placeStone(p);
+            lastPlayed = p;
 
             int val = MAX(newT, depth - 1, alpha, beta);
 
@@ -243,9 +255,9 @@ public class PathOfMinMax implements IPlayer, IAuto
      * @see Dijkstra#makePath(HexGameStatus, int[][], PlayerType)
      */
     public int heuristic(HexGameStatus board, PlayerType player) {
-        List<Point> path = dijkstra.dijkstra(board, player);
+        List<Point> path = this.dijkstra.dijkstra(board, player, lastPlayed);
         if (path == null)
             return (player == myType ? Integer.MIN_VALUE : Integer.MAX_VALUE);
-        return dijkstra.getCostOfPath(path);
+        return this.dijkstra.getCostOfPath(path);
     }
 }

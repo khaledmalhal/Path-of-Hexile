@@ -125,6 +125,44 @@ public class Dijkstra {
      * @see makePath
      * @see makePath2
      */
+    private Point getLowestSource(int[][] dist, PlayerType player) {
+        ArrayList<Point> goal;
+        int min = Integer.MAX_VALUE;
+        Point pMin = null;
+        if (player == PlayerType.PLAYER2) {
+            goal = new ArrayList<>(this.up.size());
+            for (Point p: this.up) {
+                goal.add((Point)p.clone());
+            }
+        } else {
+            goal = new ArrayList<>(this.left.size());
+            for (Point p: this.left) {
+                goal.add((Point)p.clone());
+            }
+        }
+
+        // Get the goal point with the lowest cost.
+        for (Point p: goal) {
+            int x = (int)p.getX();
+            int y = (int)p.getY();
+            if (dist[x][y] < min) {
+                min  = dist[x][y];
+                pMin = (Point)p.clone();
+            }
+        }
+        // System.out.printf("Lowest goal point: [%d, %d]\n", (int)pMin.getX(), (int)pMin.getY());
+        return (Point)pMin.clone();
+    }
+
+    /**
+     * Obtiene un {@link Point} con la distancia más corta de llegada.
+     * @param dist   Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
+     * @param player El jugador que hace la consulta.
+     * @return       {@link Point} de menor distancia.
+     * 
+     * @see makePath
+     * @see makePath2
+     */
     private Point getLowestGoal(int[][] dist, PlayerType player) {
         ArrayList<Point> goal;
         int min = Integer.MAX_VALUE;
@@ -175,20 +213,26 @@ public class Dijkstra {
      * @param pMin   Punto mínimo. Si se va a llamar a este método, use {@code null} como valor en el argumento.
      * @return       True si un punto es válido para el camino. False en caso contrario.
      */
-    private boolean makePath2(HexGameStatus board, ArrayList<Point> prev, int[][] dist, PlayerType player, Point pMin) {
-        if (pMin == null) {
-            pMin = getLowestGoal(dist, player);
-            prev.add((Point)pMin.clone());
-        }
-
-        if (Utils.isSourcePoint(pMin, player)) {
-            prev.add((Point)pMin.clone());
-            return true;
-        }
+    private boolean makePath2(HexGameStatus board, ArrayList<Point> prev, int[][] dist, PlayerType player, Point pMin, boolean sourceOrGoal) {
+        /* if (sourceOrGoal == false) {
+            if (Utils.isSourcePoint(pMin, player)) {
+                prev.add((Point)pMin.clone());
+                return true;
+            }
+        } else {
+            if (Utils.isGoalPoint(pMin, player, board.getSize())) {
+                prev.add((Point)pMin.clone());
+                return true;
+            }
+        }*/
         int min = Integer.MAX_VALUE;
         int x = (int)pMin.getX();
         int y = (int)pMin.getY();
         min = dist[x][y];
+
+        if (min == 0) {
+            return true;
+        }
 
         List<Point> neighList = board.getNeigh(pMin);
         boolean found = false;
@@ -197,10 +241,15 @@ public class Dijkstra {
             int yNeigh = (int)neigh.getY();
             if (dist[xNeigh][yNeigh] < min) {
                 found = true;
-                // System.out.printf("Min point is [%d, %d]\n", xNeigh, yNeigh);
-                if (makePath2(board, prev, dist, player, neigh) == true) {
-                    if (!Utils.isSourcePoint(neigh, player))
-                        prev.add((Point)neigh.clone());
+                System.out.printf("Min point is [%d, %d]\n", xNeigh, yNeigh);
+                if (makePath2(board, prev, dist, player, neigh, sourceOrGoal) == true) {
+                    if (sourceOrGoal == false) {
+                        if (!Utils.isSourcePoint(neigh, player))
+                            prev.add((Point)neigh.clone());
+                    } else if (sourceOrGoal == true) {
+                        if (!Utils.isGoalPoint(neigh, player, board.getSize()))
+                            prev.add((Point)neigh.clone());
+                    }
                     min = dist[xNeigh][yNeigh];
                     // pMin.move(xNeigh, yNeigh);
                 }
@@ -219,10 +268,19 @@ public class Dijkstra {
      * @see dijkstra
      * @see makePath2
      */
-    private ArrayList<Point> makePath(HexGameStatus board, int[][] dist, PlayerType player) {
+    private ArrayList<Point> makePath(HexGameStatus board, int[][] dist, PlayerType player, Point source) {
         ArrayList<Point> prev = new ArrayList<Point>();
-        if (makePath2(board, prev, dist, player, null) == true)
+        Point pGoal   = getLowestGoal(dist, player);
+        Point pSource = getLowestSource(dist, player);
+        Point clone1 = (Point)pGoal.clone();
+        Point clone2 = (Point)pSource.clone();
+        boolean toSource = makePath2(board, prev, dist, player, pSource, false);
+        boolean toGoal   = makePath2(board, prev, dist, player, pGoal,   true);
+        if (toSource == true && toGoal == true) {
+            prev.add(clone1);
+            prev.add(clone2);
             return prev;
+        }
         return null;
     }
 
@@ -247,19 +305,17 @@ public class Dijkstra {
      * @see <a href="https://github.com/orellabac/algoritmosS12015/blob/master/greedy/Dijkstra.java">https://github.com/orellabac/algoritmosS12015/blob/master/greedy/Dijkstra.java</a>
      * @see <a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm#Pseudocode">https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm#Pseudocode</a>
      */
-    public ArrayList<Point> dijkstra(HexGameStatus board, PlayerType player) {
+    public ArrayList<Point> dijkstra(HexGameStatus board, PlayerType player, Point sourcePoint) {
         /* From a point (i, j), check the following points:
-         * (i, j-1)  ;           (i+1, j-1)
+         * (i  , j-1);           (i+1, j-1)
          * (i-1, j)  ; ((i, j)); (i+1, j)
-         * (i-1, j+1);           (i, j+1)
+         * (i-1, j+1);           (i  , j+1)
          */
         PlayerType enemy = PlayerType.opposite(player);
 
         int playerColor = PlayerType.getColor(player);
         int enemyColor  = PlayerType.getColor(enemy);
-        int minCost = Integer.MAX_VALUE;
 
-        ArrayList<Point> prev = null;
         List<Point> source;
         if (player == PlayerType.PLAYER2) {
             source = new ArrayList<>(this.up.size());
@@ -273,65 +329,72 @@ public class Dijkstra {
             }
         }
 
-        for (Point p: source) {
-            // Calculate best path for every source point.
-            if (board.getPos(p) == enemyColor)
-                continue;
-            ArrayList<Point> temp;
-
+        /* List<MoveNode> moves = board.getMoves();
+        for (MoveNode move: moves) {
+            Point p = (Point)move.getPoint().clone();
             int x = (int)p.getX();
             int y = (int)p.getY();
+            System.out.printf("Possible move: [%d, %d]\n", x, y);
 
-            int     [][] dist    = new int[boardSize][boardSize];
-            boolean [][] visited = new boolean[boardSize][boardSize];
+            MoveNode parent = move.getParent();
+            if (parent == null)
+                continue;
 
-            for (int i = 0; i < boardSize; ++i) {
-                for (int j = 0; j < boardSize; ++j) {
-                    dist[i][j]    = Integer.MAX_VALUE;
-                    visited[i][j] = false;
-                }
+            p = parent.getPoint();
+            x = (int)p.getX();
+            y = (int)p.getY();
+            System.out.printf("Parent: [%d, %d]\n", x, y);
+        }
+        MoveNode move = moves.get(0);
+        Point p = (Point)move.getPoint().clone();*/
+
+
+        int x = (int)sourcePoint.getX();
+        int y = (int)sourcePoint.getY();
+
+        int     [][] dist    = new int    [boardSize][boardSize];
+        boolean [][] visited = new boolean[boardSize][boardSize];
+
+        for (int i = 0; i < boardSize; ++i) {
+            for (int j = 0; j < boardSize; ++j) {
+                dist   [i][j] = Integer.MAX_VALUE;
+                visited[i][j] = false;
             }
-            dist[x][y] = 0;
+        }
+        dist[x][y] = 0;
 
-            for (int i = 0; i < boardSize; ++i) {
-                for (int j = 0; j < boardSize; ++j) {
-                    Point minPoint = minDistancePoint(board, enemyColor, dist, visited);
-                    int xMin = (int)minPoint.getX();
-                    int yMin = (int)minPoint.getY();
+        for (int i = 0; i < boardSize; ++i) {
+            for (int j = 0; j < boardSize; ++j) {
+                Point minPoint = minDistancePoint(board, enemyColor, dist, visited);
+                int xMin = (int)minPoint.getX();
+                int yMin = (int)minPoint.getY();
 
-                    visited[xMin][yMin] = true;
+                visited[xMin][yMin] = true;
 
-                    List<Point> toVisit = new ArrayList<>(board.getNeigh(minPoint));
-                    for (Point neigh: toVisit) {
-                        int xNeigh = (int)neigh.getX();
-                        int yNeigh = (int)neigh.getY();
-                        int colorNeigh = board.getPos(neigh);
-                        int cost = Integer.MAX_VALUE;
+                List<Point> toVisit = new ArrayList<>(board.getNeigh(minPoint));
+                for (Point neigh: toVisit) {
+                    int xNeigh = (int)neigh.getX();
+                    int yNeigh = (int)neigh.getY();
+                    int colorNeigh = board.getPos(neigh);
+                    int cost = Integer.MAX_VALUE;
 
-                        // Any cost tinkering can be done here.
-                        if (colorNeigh == playerColor)
-                            cost = -5;
-                        else if (colorNeigh != playerColor && colorNeigh != enemyColor)
-                            cost = 5;
+                    // Any cost tinkering can be done here.
+                    if (colorNeigh == playerColor)
+                        cost = -5;
+                    else if (colorNeigh != playerColor && colorNeigh != enemyColor)
+                        cost = 5;
 
-                        if (visited[xNeigh][yNeigh] == false) {
-                            if (dist[xMin][yMin] + cost < dist[xNeigh][yNeigh]) {
-                                dist[xNeigh][yNeigh] = dist[xMin][yMin] + cost;
-                            }
+                    if (visited[xNeigh][yNeigh] == false) {
+                        if (dist[xMin][yMin] + cost < dist[xNeigh][yNeigh]) {
+                            dist[xNeigh][yNeigh] = dist[xMin][yMin] + cost;
                         }
                     }
                 }
             }
-            temp = makePath(board, dist, player);
-            if (temp == null)
-                continue;
-            int cost = Utils.getCostOfPath(temp, dist);
-            if (cost < minCost) {
-                minCost = cost;
-                prev = temp;
-                this.distanceMap = Utils.copy2DArray(dist);
-            }
         }
+        Utils.printDist(dist, boardSize);
+        ArrayList<Point> prev = makePath(board, dist, player, sourcePoint);
+        Utils.printPath(prev, boardSize);
         return prev;
     }
 }

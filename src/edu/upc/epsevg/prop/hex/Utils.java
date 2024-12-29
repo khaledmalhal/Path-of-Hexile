@@ -195,6 +195,8 @@ public class Utils {
                 System.out.printf(" ");
             }
             for (int i = 0; i < boardSize; ++i) {
+                if (dist[i][j] < 9)
+                    System.out.printf(" ");
                 if (dist[i][j] == Integer.MAX_VALUE)
                     System.out.printf("\033[0;31m##\033[0m, ");
                 else
