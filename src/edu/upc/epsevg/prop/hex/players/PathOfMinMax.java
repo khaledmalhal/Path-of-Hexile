@@ -68,16 +68,19 @@ public class PathOfMinMax implements IPlayer, IAuto
 
         System.out.printf("%s is player type %s\n", name, myType == PlayerType.PLAYER2 ? "PLAYER2" : "PLAYER1");
 
+        /*************
+         * DEBUGGING *
+         *************
         Point p = new Point(2,3);
         int x = (int)p.getX();
         int y = (int)p.getY();
         int color = hgs.getPos(p);
         System.out.printf("Color at [%d, %d]: %s\n", x, y, 
                                   color == PlayerType.getColor(PlayerType.PLAYER1) ? "PLAYER1" : 
-                                  color == PlayerType.getColor(PlayerType.PLAYER2) ? "PLAYER2" : "EMPTY");
-        this.dijkstra.dijkstra(hgs, myType, p);
-        throw new UnsupportedOperationException("Not supported yet.");
-        // return minmax(hgs, depth);
+                                  color == PlayerType.getColor(PlayerType.PLAYER2) ? "PLAYER2" : "EMPTY");*/
+        // this.dijkstra.dijkstra(hgs, myType, p);
+        // throw new UnsupportedOperationException("Not supported yet.");
+        return minmax(hgs, depth);
     }
 
     /**

@@ -213,22 +213,10 @@ public class Dijkstra {
      * @param pMin   Punto mínimo. Si se va a llamar a este método, use {@code null} como valor en el argumento.
      * @return       True si un punto es válido para el camino. False en caso contrario.
      */
-    private boolean makePath2(HexGameStatus board, ArrayList<Point> prev, int[][] dist, PlayerType player, Point pMin, boolean sourceOrGoal) {
-        /* if (sourceOrGoal == false) {
-            if (Utils.isSourcePoint(pMin, player)) {
-                prev.add((Point)pMin.clone());
-                return true;
-            }
-        } else {
-            if (Utils.isGoalPoint(pMin, player, board.getSize())) {
-                prev.add((Point)pMin.clone());
-                return true;
-            }
-        }*/
-        int min = Integer.MAX_VALUE;
+    private boolean makePath2(HexGameStatus board, ArrayList<Point> prev, int[][] dist, Point pMin) {
         int x = (int)pMin.getX();
         int y = (int)pMin.getY();
-        min = dist[x][y];
+        int min = dist[x][y];
 
         if (min == 0) {
             return true;
@@ -240,16 +228,9 @@ public class Dijkstra {
             int xNeigh = (int)neigh.getX();
             int yNeigh = (int)neigh.getY();
             if (dist[xNeigh][yNeigh] < min) {
-                found = true;
-                System.out.printf("Min point is [%d, %d]\n", xNeigh, yNeigh);
-                if (makePath2(board, prev, dist, player, neigh, sourceOrGoal) == true) {
-                    if (sourceOrGoal == false) {
-                        if (!Utils.isSourcePoint(neigh, player))
-                            prev.add((Point)neigh.clone());
-                    } else if (sourceOrGoal == true) {
-                        if (!Utils.isGoalPoint(neigh, player, board.getSize()))
-                            prev.add((Point)neigh.clone());
-                    }
+                found = makePath2(board, prev, dist, neigh);
+                if (found == true) {
+                    prev.add((Point)neigh.clone());
                     min = dist[xNeigh][yNeigh];
                     // pMin.move(xNeigh, yNeigh);
                 }
@@ -274,8 +255,8 @@ public class Dijkstra {
         Point pSource = getLowestSource(dist, player);
         Point clone1 = (Point)pGoal.clone();
         Point clone2 = (Point)pSource.clone();
-        boolean toSource = makePath2(board, prev, dist, player, pSource, false);
-        boolean toGoal   = makePath2(board, prev, dist, player, pGoal,   true);
+        boolean toSource = makePath2(board, prev, dist, pSource);
+        boolean toGoal   = makePath2(board, prev, dist, pGoal);
         if (toSource == true && toGoal == true) {
             prev.add(clone1);
             prev.add(clone2);
@@ -329,28 +310,12 @@ public class Dijkstra {
             }
         }
 
-        /* List<MoveNode> moves = board.getMoves();
-        for (MoveNode move: moves) {
-            Point p = (Point)move.getPoint().clone();
-            int x = (int)p.getX();
-            int y = (int)p.getY();
-            System.out.printf("Possible move: [%d, %d]\n", x, y);
-
-            MoveNode parent = move.getParent();
-            if (parent == null)
-                continue;
-
-            p = parent.getPoint();
-            x = (int)p.getX();
-            y = (int)p.getY();
-            System.out.printf("Parent: [%d, %d]\n", x, y);
-        }
-        MoveNode move = moves.get(0);
-        Point p = (Point)move.getPoint().clone();*/
-
-
         int x = (int)sourcePoint.getX();
         int y = (int)sourcePoint.getY();
+
+        // System.out.println("\n###############################################");
+        // System.out.printf("    Executing Dijkstra with source [%d, %d]", x, y);
+        // System.out.println("\n###############################################\n");
 
         int     [][] dist    = new int    [boardSize][boardSize];
         boolean [][] visited = new boolean[boardSize][boardSize];
@@ -392,9 +357,9 @@ public class Dijkstra {
                 }
             }
         }
-        Utils.printDist(dist, boardSize);
+        // Utils.printDist(dist, boardSize);
         ArrayList<Point> prev = makePath(board, dist, player, sourcePoint);
-        Utils.printPath(prev, boardSize);
+        // Utils.printPath(prev, boardSize);
         return prev;
     }
 }
