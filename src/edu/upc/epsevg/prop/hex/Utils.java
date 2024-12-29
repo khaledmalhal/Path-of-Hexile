@@ -105,6 +105,25 @@ public class Utils {
             }
         return availables;
     }
+    
+    /**
+     * Método para calcular el número de casillas vacías en el tablero actual.
+     *
+     * @param t     Tablero actual.
+     * @return      Devuelve el número de casillas vacías del tablero.
+     */
+    static public int countEmptyCells(HexGameStatus t) {
+        int count = 0;
+        int size = t.getSize();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (t.getPos(i, j) == 0) { 
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
 
     /**
      * Obtiene la menor distancia de todos los vecinos de un punto.

@@ -142,7 +142,7 @@ public class PathOfMinMax implements IPlayer, IAuto
         }
 
         // Caso base: profundidad 0 o no hay más movimientos
-        if (depth == 0 || countEmptyCells(t) == 0) {
+        if (depth == 0 || Utils.countEmptyCells(t) == 0) {
             numNodes++;
             return heuristic(t, myType);
         }
@@ -192,7 +192,7 @@ public class PathOfMinMax implements IPlayer, IAuto
         }
 
         // Caso base: profundidad 0 o no hay más movimientos
-        if (depth == 0 || countEmptyCells(t) == 0) {
+        if (depth == 0 || Utils.countEmptyCells(t) == 0) {
             numNodes++;
             return heuristic(t, enemyType);
         }
@@ -220,29 +220,6 @@ public class PathOfMinMax implements IPlayer, IAuto
         }
         return beta;
     }
-    
-    //////////////////////////////////////////////////////////////////////////////
-    //////////////////////////  MÉTODOS AUXILIARES  ///////////////////////////
-    //////////////////////////////////////////////////////////////////////////////
-    /**
-     * Función para calcular el número de casillas vacías en el tablero actual.
-     *
-     * @param t     Tablero actual.
-     * @return      Devuelve el número de casillas vacías del tablero.
-     */
-    private int countEmptyCells(HexGameStatus t) {
-        int count = 0;
-        int size = t.getSize();
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (t.getPos(i, j) == 0) { 
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
 
     /**
      * Retorna el coste mínimo de una jugada para un jugador determinado.
