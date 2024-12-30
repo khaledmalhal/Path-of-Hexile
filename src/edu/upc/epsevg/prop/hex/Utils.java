@@ -143,6 +143,18 @@ public class Utils {
         return ret;
     }
 
+    static public int getEnemyNeighbors(HexGameStatus board, Point point, PlayerType player) {
+        PlayerType enemy = PlayerType.opposite(player);
+        int enemyColor = PlayerType.getColor(enemy);
+        ArrayList<Point> neighList = board.getNeigh(point);
+        int ret = 0;
+        for (Point neigh: neighList) {
+            if (board.getPos(neigh) == enemyColor)
+                ++ret;
+        }
+        return ret;
+    }
+
     /**
      * Retorna el coste de una lista de {@link Point}.
      * <p>

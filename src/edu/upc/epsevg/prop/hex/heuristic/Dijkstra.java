@@ -252,6 +252,7 @@ public class Dijkstra {
                 if (found == true) {
                     prev.add((Point)neigh.clone());
                     min = dist[xNeigh][yNeigh];
+                    break;
                     // pMin.move(xNeigh, yNeigh);
                 }
             }
@@ -276,18 +277,19 @@ public class Dijkstra {
      */
     private ArrayList<Point> makePath(HexGameStatus board, int[][] dist, PlayerType player, Point source) {
         ArrayList<Point> prev = new ArrayList<Point>();
+        // Utils.printDist(dist, boardSize);
         Point pGoal   = getLowestGoal(dist, player);
         Point pSource = getLowestSource(dist, player);
         Point clone1 = (Point)pGoal.clone();
         Point clone2 = (Point)pSource.clone();
         boolean toSource = makePath2(board, prev, dist, pSource);
         boolean toGoal   = makePath2(board, prev, dist, pGoal);
-        if (toSource == true && toGoal == true) {
-            prev.add(clone1);
-            prev.add(clone2);
-            return prev;
-        }
-        return null;
+        // if (toSource == true && toGoal == true) {
+        prev.add(clone1);
+        prev.add(clone2);
+        return prev;
+        // }
+        // return null;
     }
 
     /**
@@ -373,6 +375,8 @@ public class Dijkstra {
                         cost = -5;
                     else if (colorNeigh != playerColor && colorNeigh != enemyColor)
                         cost = 5;
+                    int neighEnemies = Utils.getEnemyNeighbors(board, neigh, player);
+                    cost += (5 * neighEnemies);
 
                     if (visited[xNeigh][yNeigh] == false) {
                         if (dist[xMin][yMin] + cost < dist[xNeigh][yNeigh]) {
@@ -382,10 +386,11 @@ public class Dijkstra {
                 }
             }
         }
-        // Utils.printDist(dist, boardSize);
         this.distanceMap = Utils.copy2DArray(dist);
         ArrayList<Point> prev = makePath(board, dist, player, sourcePoint);
+        // Utils.printDist(dist, boardSize);
         // Utils.printPath(prev, boardSize);
+        // System.out.printf("Cost of path: %d\n", getCostOfPath(prev));
         return prev;
     }
 }

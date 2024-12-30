@@ -67,17 +67,18 @@ public class PathOfMinMax implements IPlayer, IAuto
         this.dijkstra = new Dijkstra(this.boardSize);
 
         System.out.printf("%s is player type %s\n", name, myType == PlayerType.PLAYER2 ? "PLAYER2" : "PLAYER1");
+        System.out.printf("Depth: %d\n", depth);
 
         /*************
          * DEBUGGING *
-         *************
-        Point p = new Point(2,3);
-        int x = (int)p.getX();
-        int y = (int)p.getY();
-        int color = hgs.getPos(p);
-        System.out.printf("Color at [%d, %d]: %s\n", x, y, 
-                                  color == PlayerType.getColor(PlayerType.PLAYER1) ? "PLAYER1" : 
-                                  color == PlayerType.getColor(PlayerType.PLAYER2) ? "PLAYER2" : "EMPTY");*/
+         *************/
+        // Point p = new Point(2,3);
+        // int x = (int)p.getX();
+        // int y = (int)p.getY();
+        // int color = hgs.getPos(p);
+        // System.out.printf("Color at [%d, %d]: %s\n", x, y, 
+        //                           color == PlayerType.getColor(PlayerType.PLAYER1) ? "PLAYER1" : 
+        //                           color == PlayerType.getColor(PlayerType.PLAYER2) ? "PLAYER2" : "EMPTY");
         // this.dijkstra.dijkstra(hgs, myType, p);
         // throw new UnsupportedOperationException("Not supported yet.");
         return minmax(hgs, depth);
@@ -116,12 +117,12 @@ public class PathOfMinMax implements IPlayer, IAuto
         Point p0 = moves.get(0).getPoint();
         PlayerMove bestMove = new PlayerMove(p0, 0, 0, SearchType.MINIMAX);
 
-
         // Recorrer todas las opciones
         for (MoveNode mn : moves) {
-            Point p = mn.getPoint();
+            Point p = (Point)mn.getPoint().clone();
             HexGameStatus newT = new HexGameStatus(t);
             newT.placeStone(p);  // Jugamos nuestra ficha BF en p
+            lastPlayed = p;
 
             int value = MIN(newT, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
 
@@ -218,7 +219,7 @@ public class PathOfMinMax implements IPlayer, IAuto
             return heuristic(t, enemyType);
         }
 
-        // Recorremos cada movimiento y llamamos a MIN
+        // Recorremos cada movimiento y llamamos a MAX
         for (MoveNode mn : moves) {
             Point p = mn.getPoint();
             HexGameStatus newT = new HexGameStatus(t);
@@ -259,10 +260,12 @@ public class PathOfMinMax implements IPlayer, IAuto
      */
     public int heuristic(HexGameStatus board, PlayerType player) {
         List<Point> path = this.dijkstra.dijkstra(board, player, lastPlayed);
+        int score = 1000;
         if (path == null) {
-            // System.out.println("Path is null!");
+            System.out.println("Path is null!");
             return (player == myType ? Integer.MIN_VALUE : Integer.MAX_VALUE);
         }
-        return this.dijkstra.getCostOfPath(path);
+        int cost = dijkstra.getCostOfPath(path);
+        return score - cost;
     }
 }
