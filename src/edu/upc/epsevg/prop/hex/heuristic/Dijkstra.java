@@ -201,6 +201,7 @@ public class Dijkstra {
                 pMin = (Point)p.clone();
             }
         }
+        if (pMin == null) Utils.printDist(dist, dist.length);
         // System.out.printf("Lowest goal point: [%d, %d]\n", (int)pMin.getX(), (int)pMin.getY());
         return (Point)pMin.clone();
     }
@@ -269,13 +270,12 @@ public class Dijkstra {
      * @param board  El tablero del juego.
      * @param dist   Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
      * @param player El juegador que hace la consulta del camino.
-     * @param source El punto fuente de la útlima jugada.
      * @return       Una {@link ArrayList<Point>} con el camino con menor coste.
      * 
      * @see dijkstra
      * @see makePath2
      */
-    private ArrayList<Point> makePath(HexGameStatus board, int[][] dist, PlayerType player, Point source) {
+    private ArrayList<Point> makePath(HexGameStatus board, int[][] dist, PlayerType player) {
         ArrayList<Point> prev = new ArrayList<Point>();
         // Utils.printDist(dist, boardSize);
         Point pGoal   = getLowestGoal(dist, player);
@@ -372,7 +372,7 @@ public class Dijkstra {
 
                     // Any cost tinkering can be done here.
                     if (colorNeigh == playerColor)
-                        cost = -5;
+                        cost = 1;
                     else if (colorNeigh != playerColor && colorNeigh != enemyColor)
                         cost = 5;
                     int neighEnemies = Utils.getEnemyNeighbors(board, neigh, player);
@@ -387,7 +387,7 @@ public class Dijkstra {
             }
         }
         this.distanceMap = Utils.copy2DArray(dist);
-        ArrayList<Point> prev = makePath(board, dist, player, sourcePoint);
+        ArrayList<Point> prev = makePath(board, dist, player);
         // Utils.printDist(dist, boardSize);
         // Utils.printPath(prev, boardSize);
         // System.out.printf("Cost of path: %d\n", getCostOfPath(prev));

@@ -23,7 +23,6 @@ public class PathOfMinMax implements IPlayer, IAuto
     private int boardSize;
     private int depth;
     private Dijkstra dijkstra;
-    private Point lastPlayed;
 
     private long numNodes;
 
@@ -76,8 +75,8 @@ public class PathOfMinMax implements IPlayer, IAuto
         // int x = (int)p.getX();
         // int y = (int)p.getY();
         // int color = hgs.getPos(p);
-        // System.out.printf("Color at [%d, %d]: %s\n", x, y, 
-        //                           color == PlayerType.getColor(PlayerType.PLAYER1) ? "PLAYER1" : 
+        // System.out.printf("Color at [%d, %d]: %s\n", x, y,
+        //                           color == PlayerType.getColor(PlayerType.PLAYER1) ? "PLAYER1" :
         //                           color == PlayerType.getColor(PlayerType.PLAYER2) ? "PLAYER2" : "EMPTY");
         // this.dijkstra.dijkstra(hgs, myType, p);
         // throw new UnsupportedOperationException("Not supported yet.");
@@ -122,9 +121,8 @@ public class PathOfMinMax implements IPlayer, IAuto
             Point p = (Point)mn.getPoint().clone();
             HexGameStatus newT = new HexGameStatus(t);
             newT.placeStone(p);  // Jugamos nuestra ficha BF en p
-            lastPlayed = p;
 
-            int value = MIN(newT, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            int value = MIN(newT, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, p);
 
             // Escoger el mejor
             if (value > valor) {
@@ -144,7 +142,7 @@ public class PathOfMinMax implements IPlayer, IAuto
      * @param beta  Valor de β (mejor opción de MIN hasta el momento).
      * @return      Devuelve el valor heurístico máximo de todos los movimientos posibles.
      */
-    private int MAX(HexGameStatus t, int depth, int alpha, int beta) {
+    private int MAX(HexGameStatus t, int depth, int alpha, int beta, Point lastPlayed) {
         // Si se acabó la partida, evaluamos
         if (t.isGameOver()) {
             PlayerType win = t.GetWinner();
@@ -158,14 +156,14 @@ public class PathOfMinMax implements IPlayer, IAuto
         // Caso base: profundidad 0 o no hay más movimientos
         if (depth == 0 || Utils.countEmptyCells(t) == 0) {
             numNodes++;
-            return heuristic(t, myType);
+            return heuristic(t, myType, lastPlayed);
         }
 
         // Generamos todos los movimientos posibles
         List<MoveNode> moves = t.getMoves();
         // Si no hay movimientos, devolvemos la heurística
         if (moves.isEmpty()) {
-            return heuristic(t, myType);
+            return heuristic(t, myType, lastPlayed);
         }
 
         // Recorremos cada movimiento y llamamos a MIN
@@ -173,9 +171,8 @@ public class PathOfMinMax implements IPlayer, IAuto
             Point p = mn.getPoint();
             HexGameStatus newT = new HexGameStatus(t);
             newT.placeStone(p);
-            lastPlayed = p;
 
-            int val = MIN(newT, depth - 1, alpha, beta);
+            int val = MIN(newT, depth - 1, alpha, beta, p);
 
             alpha = Math.max(alpha, val);
             // Poda
@@ -195,7 +192,7 @@ public class PathOfMinMax implements IPlayer, IAuto
      * @param beta  Valor de β (mejor opción de MIN hasta el momento).
      * @return      Devuelve el valor heurístico mínimo de todos los movimientos posibles.
      */
-    private int MIN(HexGameStatus t, int depth, int alpha, int beta) {
+    private int MIN(HexGameStatus t, int depth, int alpha, int beta, Point lastPlayed) {
         // Si se acabó la partida, evaluamos
         if (t.isGameOver()) {
             PlayerType win = t.GetWinner();
@@ -203,20 +200,20 @@ public class PathOfMinMax implements IPlayer, IAuto
                 return Integer.MAX_VALUE;
             } else {
                 return Integer.MIN_VALUE;
-            } 
+            }
         }
 
         // Caso base: profundidad 0 o no hay más movimientos
         if (depth == 0 || Utils.countEmptyCells(t) == 0) {
             numNodes++;
-            return heuristic(t, enemyType);
+            return heuristic(t, enemyType, lastPlayed);
         }
 
         // Generamos todos los movimientos posibles
         List<MoveNode> moves = t.getMoves();
         // Si no hay movimientos, devolvemos la heurística
         if (moves.isEmpty()) {
-            return heuristic(t, enemyType);
+            return heuristic(t, enemyType, lastPlayed);
         }
 
         // Recorremos cada movimiento y llamamos a MAX
@@ -224,9 +221,8 @@ public class PathOfMinMax implements IPlayer, IAuto
             Point p = mn.getPoint();
             HexGameStatus newT = new HexGameStatus(t);
             newT.placeStone(p);
-            lastPlayed = p;
 
-            int val = MAX(newT, depth - 1, alpha, beta);
+            int val = MAX(newT, depth - 1, alpha, beta, p);
 
             beta = Math.min(beta, val);
             // Poda
@@ -258,14 +254,35 @@ public class PathOfMinMax implements IPlayer, IAuto
      * @see Dijkstra#getCostOfPath(List<Point>)
      * @see Dijkstra#makePath(HexGameStatus, int[][], PlayerType)
      */
-    public int heuristic(HexGameStatus board, PlayerType player) {
+    public int heuristic(HexGameStatus board, PlayerType player, Point lastPlayed) {
         List<Point> path = this.dijkstra.dijkstra(board, player, lastPlayed);
-        int score = 1000;
+        int score = 0;
+
         if (path == null) {
             System.out.println("Path is null!");
             return (player == myType ? Integer.MIN_VALUE : Integer.MAX_VALUE);
         }
+
+        int playerColor = PlayerType.getColor(player);
+        int enemyColor  = PlayerType.getColor(PlayerType.opposite(player));
         int cost = dijkstra.getCostOfPath(path);
-        return score - cost;
+
+        for (Point p: path) {
+            int color = board.getPos(p);
+            if (color == playerColor)
+                score += 350;
+            if (color == enemyColor) {
+                score -= 400;
+                System.out.println("It's an enemy point");
+            }
+        }
+        // score = score / cost;
+        if (player == enemyType)
+            score = score * (-1);
+        if (score == 0)
+            System.out.printf("Score for player %s placed on [%d, %d]: %d\n",
+                            player == PlayerType.PLAYER1 ? "PLAYER1" : "PLAYER2",
+                            (int)lastPlayed.getX(), (int)lastPlayed.getY(), score);
+        return score;
     }
 }
