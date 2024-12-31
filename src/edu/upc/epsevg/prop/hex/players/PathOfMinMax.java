@@ -240,21 +240,20 @@ public class PathOfMinMax implements IPlayer, IAuto
     /**
      * Retorna el coste mínimo de una jugada para un jugador determinado.
      * <p>
-     * Internamente, hace una llamada al método {@link Dijkstra#dijkstra(HexGameStatus, PlayerType)} 
-     * para obtener el camino con menor distancia desde la fuente hasta el destino. 
-     * Y luego calcula el coste a partir del camino encontrado.
+     * Internamente, hace una llamada al método {@link Dijkstra#dijkstra(HexGameStatus, PlayerType, Point)} 
+     * para obtener el camino con menor distancia desde la fuente (la última pieza 
+     * jugada) hasta el destino.
      * <p>
-     * También, se usa de una matriz de tipo {@link int[][]} miembro 
-     * ({@code this.distanceMap}) donde están establecidas las distancias desde 
-     * un punto fuente del tablero hasta todos los demás puntos para el cálculo del 
-     * coste del camino.
+     * A partir de este camino, el puntaje de la heurística es calculada a partir 
+     * de la cantidad de puntos del jugador puestos en el camino.
      * <p>
      * Es importante ejecutar este método solo después de haber simulado una jugada.
-     * @param board  El tablero del juego.
-     * @param player El jugador que hace la consulta.
-     * @return       El coste de una jugada.
+     * @param board      El tablero del juego.
+     * @param player     El jugador que hace la consulta.
+     * @param lastPlayed Es la última pieza jugada en una simulación.
+     * @return           El coste de una jugada.
      * 
-     * @see Dijkstra#dijkstra(HexGameStatus, PlayerType)
+     * @see Dijkstra#dijkstra(HexGameStatus, PlayerType, Point)
      * @see Dijkstra#getCostOfPath(List<Point>)
      * @see Dijkstra#makePath(HexGameStatus, int[][], PlayerType)
      */

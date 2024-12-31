@@ -70,8 +70,9 @@ public class Utils {
      * <p>
      * Para un jugador de tipo {@code PlayerType.PLAYER2} los puntos destino son 
      * aquellos que se encuentran en la última fila.
-     * @param p      Punto a consultar.
-     * @param player El jugador que hace la consulta.
+     * @param p         Punto a consultar.
+     * @param player    El jugador que hace la consulta.
+     * @param boardSize El tamaño del tablero.
      * @return       {@code true} si el punto pertenece a los puntos destino; {@code false} en caso contrario.
      * 
      * @see isSourcePoint
@@ -142,7 +143,14 @@ public class Utils {
         }
         return ret;
     }
-
+    
+    /**
+     * Devuelve la cantidad de enemigos vecinos de un punto.
+     * @param board  El tablero del juego.
+     * @param point  Punto a consultar.
+     * @param player El jugador que hace la consulta.
+     * @return       El número de enemigos alrededor de un punto.
+     */
     static public int countEnemyNeighbors(HexGameStatus board, Point point, PlayerType player) {
         PlayerType enemy = PlayerType.opposite(player);
         int enemyColor = PlayerType.getColor(enemy);
@@ -164,7 +172,7 @@ public class Utils {
      * @param dist Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
      * @return     Retorna el coste de una lista de {@link Point}.
      * 
-     * @see edu.upc.epsevg.prop.hex.heuristic.Dijkstra#dijkstra(HexGameStatus, PlayerType)
+     * @see edu.upc.epsevg.prop.hex.heuristic.Dijkstra#dijkstra(HexGameStatus, PlayerType, Point)
      */
     static public int getCostOfPath(List<Point> list, int[][] dist) {
         int ret = 0;
@@ -198,7 +206,7 @@ public class Utils {
      * @param dist      Una matriz con las distancias desde la fuente. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
      * @param boardSize El tamaño del tablero.
      * 
-     * @see edu.upc.epsevg.prop.hex.heuristic.Dijkstra#dijkstra(HexGameStatus, PlayerType)
+     * @see edu.upc.epsevg.prop.hex.heuristic.Dijkstra#dijkstra(HexGameStatus, PlayerType, Point)
      */
     static public void printDist(int[][] dist, int boardSize) {
         System.out.println("\n############\n  Cost map\n############\n");
@@ -225,7 +233,7 @@ public class Utils {
      * @param visited   Una matriz con las fichas visitadas. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
      * @param boardSize El tamaño del tablero.
      * 
-     * @see edu.upc.epsevg.prop.hex.heuristic.Dijkstra#dijkstra(HexGameStatus, PlayerType)
+     * @see edu.upc.epsevg.prop.hex.heuristic.Dijkstra#dijkstra(HexGameStatus, PlayerType, Point)
      */
     static public void printVisited(boolean[][] visited, int boardSize) {
         System.out.println("\n###############\n  Visited map\n###############\n");
