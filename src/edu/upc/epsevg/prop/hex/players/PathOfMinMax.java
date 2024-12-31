@@ -78,25 +78,12 @@ public class PathOfMinMax implements IPlayer, IAuto
         // System.out.printf("%s is player type %s\n", name, myType == PlayerType.PLAYER2 ? "PLAYER2" : "PLAYER1");
         // System.out.printf("Depth: %d\n", depth);
 
-        /*************
-         * DEBUGGING *
-         *************/
-        // Point p = new Point(2,3);
-        // int x = (int)p.getX();
-        // int y = (int)p.getY();
-        // int color = hgs.getPos(p);
-        // System.out.printf("Color at [%d, %d]: %s\n", x, y,
-        //                           color == PlayerType.getColor(PlayerType.PLAYER1) ? "PLAYER1" :
-        //                           color == PlayerType.getColor(PlayerType.PLAYER2) ? "PLAYER2" : "EMPTY");
-        // this.dijkstra.dijkstra(hgs, myType, p);
-        // throw new UnsupportedOperationException("Not supported yet.");
         PlayerMove ret = minmax(hgs, depth);
 
         LocalDateTime now = LocalDateTime.now();
         long milli = ChronoUnit.MILLIS.between(time1, now);
         LocalDateTime instant = LocalDateTime.ofInstant(Instant.ofEpochMilli(milli), ZoneId.systemDefault());
         System.out.println("Time to execute MinMax: " + instant.format(formatter));
-
         return ret;
     }
 
@@ -276,13 +263,13 @@ public class PathOfMinMax implements IPlayer, IAuto
         int score = 0;
 
         if (path == null) {
-            System.out.println("Path is null!");
+            // System.out.println("Path is null!");
             return (player == myType ? Integer.MIN_VALUE : Integer.MAX_VALUE);
         }
 
         int playerColor = PlayerType.getColor(player);
         int enemyColor  = PlayerType.getColor(PlayerType.opposite(player));
-        int cost = dijkstra.getCostOfPath(path);
+        // int cost = dijkstra.getCostOfPath(path);
 
         for (Point p: path) {
             int color = board.getPos(p);
@@ -290,10 +277,9 @@ public class PathOfMinMax implements IPlayer, IAuto
                 score += 350;
             if (color == enemyColor) {
                 score -= 400;
-                System.out.println("It's an enemy point");
             }
         }
-        // score = score / cost;
+        // score = score - cost;
         if (player == enemyType)
             score = score * (-1);
         // if (score == 0)

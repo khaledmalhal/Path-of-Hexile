@@ -110,19 +110,15 @@ public class Dijkstra {
         Point minPoint = new Point(0, 0);
         for (int x = 0; x < boardSize; ++x) {
             for (int y = 0; y < boardSize; ++y) {
-                if (visited[x][y] == true)
-                    continue;
+                if (visited[x][y] == false && dist[x][y] < min) {
+                    // board.getPos(x,y) != enemyColor) {
+                    // int color = board.getPos(x,y);
+                    // int playerColor = PlayerType.getColor(PlayerType.opposite(PlayerType.fromInt((byte)enemyColor)));
+                    // System.out.printf("Color: %s \n", color == enemyColor ? "ENEMY" : color == playerColor ? "PLAYER" : "EMPTY");
+                    // System.out.printf("New min distance [%d, %d]: %d\n", x, y, min);
 
-                int color = board.getPos(x, y);
-
-                if (color == enemyColor) {
-                    dist[x][y] = Integer.MAX_VALUE;
-                    visited[x][y] = true;
-                } else {
-                    if (dist[x][y] <= min) {
-                        min = dist[x][y];
-                        minPoint.move(x, y);
-                    }
+                    min = dist[x][y];
+                    minPoint = new Point(x, y);
                 }
             }
         }
@@ -163,6 +159,9 @@ public class Dijkstra {
                 pMin = (Point)p.clone();
             }
         }
+        if (pMin == null) {
+            throw new NullPointerException("LowestSource");
+        }
         // System.out.printf("Lowest goal point: [%d, %d]\n", (int)pMin.getX(), (int)pMin.getY());
         return (Point)pMin.clone();
     }
@@ -201,7 +200,9 @@ public class Dijkstra {
                 pMin = (Point)p.clone();
             }
         }
-        if (pMin == null) Utils.printDist(dist, dist.length);
+        if (pMin == null) {
+            throw new NullPointerException("LowestGoal");
+        }
         // System.out.printf("Lowest goal point: [%d, %d]\n", (int)pMin.getX(), (int)pMin.getY());
         return (Point)pMin.clone();
     }
@@ -278,18 +279,19 @@ public class Dijkstra {
     private ArrayList<Point> makePath(HexGameStatus board, int[][] dist, PlayerType player) {
         ArrayList<Point> prev = new ArrayList<Point>();
         // Utils.printDist(dist, boardSize);
-        Point pGoal   = getLowestGoal(dist, player);
-        Point pSource = getLowestSource(dist, player);
-        Point clone1 = (Point)pGoal.clone();
-        Point clone2 = (Point)pSource.clone();
-        boolean toSource = makePath2(board, prev, dist, pSource);
-        boolean toGoal   = makePath2(board, prev, dist, pGoal);
-        // if (toSource == true && toGoal == true) {
-        prev.add(clone1);
-        prev.add(clone2);
-        return prev;
-        // }
-        // return null;
+        try {
+            Point pGoal   = getLowestGoal(dist, player);
+            Point pSource = getLowestSource(dist, player);
+            Point clone1 = (Point)pGoal.clone();
+            Point clone2 = (Point)pSource.clone();
+            boolean toSource = makePath2(board, prev, dist, pSource);
+            boolean toGoal   = makePath2(board, prev, dist, pGoal);
+            prev.add(clone1);
+            prev.add(clone2);
+            return prev;
+        } catch (NullPointerException error) {
+            return null;
+        }
     }
 
     /**
@@ -340,21 +342,16 @@ public class Dijkstra {
         int x = (int)sourcePoint.getX();
         int y = (int)sourcePoint.getY();
 
-        // System.out.println("\n###############################################");
-        // System.out.printf("    Executing Dijkstra with source [%d, %d]", x, y);
-        // System.out.println("\n###############################################\n");
-
         int     [][] dist    = new int    [boardSize][boardSize];
         boolean [][] visited = new boolean[boardSize][boardSize];
 
         for (int i = 0; i < boardSize; ++i) {
             for (int j = 0; j < boardSize; ++j) {
-                dist   [i][j] = Integer.MAX_VALUE;
                 visited[i][j] = false;
+                dist   [i][j] = Integer.MAX_VALUE;
             }
         }
         dist[x][y] = 0;
-
         for (int i = 0; i < boardSize; ++i) {
             for (int j = 0; j < boardSize; ++j) {
                 Point minPoint = minDistancePoint(board, enemyColor, dist, visited);
@@ -368,29 +365,26 @@ public class Dijkstra {
                     int xNeigh = (int)neigh.getX();
                     int yNeigh = (int)neigh.getY();
                     int colorNeigh = board.getPos(neigh);
-                    int cost = Integer.MAX_VALUE;
+                    int cost = 0;
 
-                    // Any cost tinkering can be done here.
-                    if (colorNeigh == playerColor)
+                    if (colorNeigh == enemyColor) {
+                        cost = 100000;
+                    }
+                    else if (colorNeigh == playerColor) {
                         cost = 1;
-                    else if (colorNeigh != playerColor && colorNeigh != enemyColor)
+                    }
+                    else if (colorNeigh != playerColor && colorNeigh != enemyColor) {
                         cost = 5;
-                    int neighEnemies = Utils.getEnemyNeighbors(board, neigh, player);
-                    cost += (5 * neighEnemies);
-
-                    if (visited[xNeigh][yNeigh] == false) {
-                        if (dist[xMin][yMin] + cost < dist[xNeigh][yNeigh]) {
-                            dist[xNeigh][yNeigh] = dist[xMin][yMin] + cost;
-                        }
+                    }
+                    
+                    if (visited[xNeigh][yNeigh] == false && dist[xMin][yMin] + cost < dist[xNeigh][yNeigh]) {
+                        dist[xNeigh][yNeigh] = dist[xMin][yMin] + cost;
                     }
                 }
             }
         }
         this.distanceMap = Utils.copy2DArray(dist);
         ArrayList<Point> prev = makePath(board, dist, player);
-        // Utils.printDist(dist, boardSize);
-        // Utils.printPath(prev, boardSize);
-        // System.out.printf("Cost of path: %d\n", getCostOfPath(prev));
         return prev;
     }
 }

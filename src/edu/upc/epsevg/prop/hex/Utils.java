@@ -143,7 +143,7 @@ public class Utils {
         return ret;
     }
 
-    static public int getEnemyNeighbors(HexGameStatus board, Point point, PlayerType player) {
+    static public int countEnemyNeighbors(HexGameStatus board, Point point, PlayerType player) {
         PlayerType enemy = PlayerType.opposite(player);
         int enemyColor = PlayerType.getColor(enemy);
         ArrayList<Point> neighList = board.getNeigh(point);
@@ -213,6 +213,28 @@ public class Utils {
                     System.out.printf("\033[0;31m##\033[0m, ");
                 else
                     System.out.printf("\033[0m%d, ", dist[i][j]);
+            }
+            System.out.printf("\n");
+        }
+        System.out.println("");
+    }
+
+        /**
+     * Solo para própositos de debugging: Imprime el mapa de fichas visitadas en la ejecución de Dijkstra.
+     * <p>
+     * @param visited   Una matriz con las fichas visitadas. Las dimensiones de la matriz cuadrada es igual tamaño que el tablero.
+     * @param boardSize El tamaño del tablero.
+     * 
+     * @see edu.upc.epsevg.prop.hex.heuristic.Dijkstra#dijkstra(HexGameStatus, PlayerType)
+     */
+    static public void printVisited(boolean[][] visited, int boardSize) {
+        System.out.println("\n###############\n  Visited map\n###############\n");
+        for (int j = 0; j < boardSize; ++j) {
+            for (int tab = 0; tab < j; ++tab) {
+                System.out.printf(" ");
+            }
+            for (int i = 0; i < boardSize; ++i) {
+                System.out.printf("\033[0m%d, ", visited[i][j] == true ? 1 : 0);
             }
             System.out.printf("\n");
         }
