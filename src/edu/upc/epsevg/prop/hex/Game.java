@@ -24,12 +24,12 @@ public class Game {
             @Override
             public void run() {
                 // IPlayer player1 = new HumanPlayer( "Human");
-                IPlayer player1 = new HumanPlayer( "Human");
-                IPlayer player2 = new PathOfMinMax("PathOfMinMax", 4);
-                // IPlayer player1 = new RandomPlayer("RandomOfMinMax");
-                // IPlayer player2 = new H_E_X_Player(2/*GB*/);
+                // IPlayer player1 = new HumanPlayer( "Human");
+                IPlayer player1 = new PathOfMinMax("PathOfMinMax", 4);
+                IPlayer player2 = new RandomPlayer("RandomOfMinMax");
+                // IPlayer player2 = new H_E_X_Player(0.5f/*GB*/);
 
-                new Board(player1, player2, 5 /*mida*/, 40/*s*/, false);
+                new Board(player1, player2, 7 /*mida*/, 40/*s*/, false);
             }
         });
     }

@@ -29,8 +29,10 @@ public class PathOfMinMax implements IPlayer, IAuto
     private int boardSize;
     private int depth;
     private Dijkstra dijkstra;
+    private LocalDateTime start;
     private LocalDateTime time1;
     private DateTimeFormatter formatter;
+    private boolean first = true;
 
     private long numNodes;
 
@@ -68,7 +70,12 @@ public class PathOfMinMax implements IPlayer, IAuto
      */
     @Override
     public PlayerMove move(HexGameStatus hgs) {
-        time1 = LocalDateTime.now();
+        if (this.first == true) {
+            this.start = LocalDateTime.now();
+            this.first = false;
+        }
+        this.time1      = LocalDateTime.now();
+        this.numNodes   = 0;
         this.myType     = hgs.getCurrentPlayer();
         this.boardSize  = hgs.getSize();
         this.enemyType  = PlayerType.opposite(myType);
@@ -81,9 +88,12 @@ public class PathOfMinMax implements IPlayer, IAuto
         PlayerMove ret = minmax(hgs, depth);
 
         LocalDateTime now = LocalDateTime.now();
-        long milli = ChronoUnit.MILLIS.between(time1, now);
-        LocalDateTime instant = LocalDateTime.ofInstant(Instant.ofEpochMilli(milli), ZoneId.systemDefault());
+        long milli  = ChronoUnit.MILLIS.between(this.time1, now);
+        long milli2 = ChronoUnit.MILLIS.between(this.start, now);
+        LocalDateTime instant  = LocalDateTime.ofInstant(Instant.ofEpochMilli(milli),  ZoneId.systemDefault());
+        LocalDateTime instant2 = LocalDateTime.ofInstant(Instant.ofEpochMilli(milli2), ZoneId.systemDefault());
         System.out.println("Time to execute MinMax: " + instant.format(formatter));
+        System.out.println("Time to execute MinMax (since first iteration): " + instant2.format(formatter));
         return ret;
     }
 
