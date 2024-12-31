@@ -22,11 +22,11 @@ public class Game {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                IPlayer player1 = new HumanPlayer( "Human");
-                IPlayer player2 = new PathOfMinMax("PathOfMinMax", 4);
-                // IPlayer player2 = new H_E_X_Player(2/*GB*/);
+                // IPlayer player1 = new HumanPlayer( "Human");
+                IPlayer player1 = new PathOfMinMax("PathOfMinMax", 4);
+                IPlayer player2 = new H_E_X_Player(2/*GB*/);
 
-                new Board(player1, player2, 5 /*mida*/, 10/*s*/, false);
+                new Board(player1, player2, 7 /*mida*/, 40/*s*/, false);
             }
         });
     }

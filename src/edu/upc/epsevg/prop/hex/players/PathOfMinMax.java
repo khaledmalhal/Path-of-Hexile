@@ -8,6 +8,12 @@ import edu.upc.epsevg.prop.hex.*;
 import edu.upc.epsevg.prop.hex.heuristic.Dijkstra;
 
 import java.awt.Point;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -23,6 +29,8 @@ public class PathOfMinMax implements IPlayer, IAuto
     private int boardSize;
     private int depth;
     private Dijkstra dijkstra;
+    private LocalDateTime time1;
+    private DateTimeFormatter formatter;
 
     private long numNodes;
 
@@ -35,6 +43,7 @@ public class PathOfMinMax implements IPlayer, IAuto
     public PathOfMinMax(String name, int depth) {
         this.name = name;
         this.depth = depth;
+        formatter = DateTimeFormatter.ofPattern("mm:ss.SSS");
     }
 
     /**
@@ -59,14 +68,15 @@ public class PathOfMinMax implements IPlayer, IAuto
      */
     @Override
     public PlayerMove move(HexGameStatus hgs) {
+        time1 = LocalDateTime.now();
         this.myType     = hgs.getCurrentPlayer();
         this.boardSize  = hgs.getSize();
         this.enemyType  = PlayerType.opposite(myType);
 
         this.dijkstra = new Dijkstra(this.boardSize);
 
-        System.out.printf("%s is player type %s\n", name, myType == PlayerType.PLAYER2 ? "PLAYER2" : "PLAYER1");
-        System.out.printf("Depth: %d\n", depth);
+        // System.out.printf("%s is player type %s\n", name, myType == PlayerType.PLAYER2 ? "PLAYER2" : "PLAYER1");
+        // System.out.printf("Depth: %d\n", depth);
 
         /*************
          * DEBUGGING *
@@ -80,7 +90,14 @@ public class PathOfMinMax implements IPlayer, IAuto
         //                           color == PlayerType.getColor(PlayerType.PLAYER2) ? "PLAYER2" : "EMPTY");
         // this.dijkstra.dijkstra(hgs, myType, p);
         // throw new UnsupportedOperationException("Not supported yet.");
-        return minmax(hgs, depth);
+        PlayerMove ret = minmax(hgs, depth);
+
+        LocalDateTime now = LocalDateTime.now();
+        long milli = ChronoUnit.MILLIS.between(time1, now);
+        LocalDateTime instant = LocalDateTime.ofInstant(Instant.ofEpochMilli(milli), ZoneId.systemDefault());
+        System.out.println("Time to execute MinMax: " + instant.format(formatter));
+
+        return ret;
     }
 
     /**
@@ -279,10 +296,10 @@ public class PathOfMinMax implements IPlayer, IAuto
         // score = score / cost;
         if (player == enemyType)
             score = score * (-1);
-        if (score == 0)
-            System.out.printf("Score for player %s placed on [%d, %d]: %d\n",
-                            player == PlayerType.PLAYER1 ? "PLAYER1" : "PLAYER2",
-                            (int)lastPlayed.getX(), (int)lastPlayed.getY(), score);
+        // if (score == 0)
+        //     System.out.printf("Score for player %s placed on [%d, %d]: %d\n",
+        //                     player == PlayerType.PLAYER1 ? "PLAYER1" : "PLAYER2",
+        //                     (int)lastPlayed.getX(), (int)lastPlayed.getY(), score);
         return score;
     }
 }
